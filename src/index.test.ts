@@ -24,6 +24,20 @@ describe("sql", () => {
       }
     `);
   });
+
+  test("Raw interpolation", () => {
+    expect(
+      sql`SELECT * FROM users WHERE name = ${"Leandro Facchinetti"}$${sql` AND age = ${30}`}`
+    ).toMatchInlineSnapshot(`
+      Object {
+        "parameters": Array [
+          "Leandro Facchinetti",
+          30,
+        ],
+        "source": "SELECT * FROM users WHERE name = ? AND age = ?",
+      }
+    `);
+  });
 });
 
 describe("Database", () => {

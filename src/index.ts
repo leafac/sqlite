@@ -21,15 +21,21 @@ export function sql(
     const parameter = substitutions[templateIndex];
 
     if (templatePart.endsWith("$")) {
-      // sourceParts.push(templatePart.slice(0, -1));
+      if (
+        typeof parameter.source !== "string" ||
+        !Array.isArray(parameter.parameters)
+      )
+        throw new Error(`Failed to interpolate raw query ${parameter}`);
+      sourceParts.push(templatePart.slice(0, -1), parameter.source);
+      parameters.push(...parameter.parameters);
     } else {
-      sourceParts.push(templatePart);
+      sourceParts.push(templatePart, "?");
       parameters.push(parameter);
     }
   }
   sourceParts.push(template[template.length - 1]);
 
-  return { source: sourceParts.join("?"), parameters };
+  return { source: sourceParts.join(""), parameters };
 }
 
 // FIXME: Use normal method definition syntax: https://github.com/JoshuaWise/better-sqlite3/issues/551
