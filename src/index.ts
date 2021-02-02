@@ -9,8 +9,8 @@ export function sql(
   template: TemplateStringsArray,
   ...substitutions: any[]
 ): Query {
-  const sourceParts = new Array<string>();
-  const parameters = new Array<any>();
+  const sourceParts: string[] = [];
+  const parameters: any[] = [];
 
   for (
     let templateIndex = 0;
@@ -32,7 +32,8 @@ export function sql(
   return { source: sourceParts.join("?"), parameters };
 }
 
-// FIXME: https://github.com/JoshuaWise/better-sqlite3/issues/551
+// FIXME: Use normal method definition syntax: https://github.com/JoshuaWise/better-sqlite3/issues/551
+// FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
