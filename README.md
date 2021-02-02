@@ -1,5 +1,5 @@
 <h1 align="center">@leafac/sqlite</h1>
-<h3 align="center"><a href="https://npm.im/better-sqlite3">better-sqlite3</a> with tagged template literals</h3>
+<h3 align="center"><a href="https://npm.im/better-sqlite3">better-sqlite3</a> with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">tagged template literals</a></h3>
 <p align="center">
 <a href="https://github.com/leafac/sqlite"><img src="https://img.shields.io/badge/Source---" alt="Source"></a>
 <a href="https://www.npmjs.com/package/@leafac/sqlite"><img alt="Package" src="https://badge.fury.io/js/%40leafac%2Fsqlite.svg"></a>
