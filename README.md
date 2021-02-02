@@ -54,6 +54,10 @@ The `Database` keeps a map from query sources to better-sqlite3 prepared stateme
 
 There’s no cache eviction policy in @leafac/sqlite. The prepared statements for every query ever ran hang around in memory for as long as the database object is alive (the statements aren’t eligible for garbage collection because they’re in the map). In most cases, that’s fine because there are only a limited number of queries; it’s the bound parameters that change. If that becomes a problem for you, you may access the cache under the `statements` property and implement your own cache eviction policy.
 
+### Related Projects
+
+- <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
+
 ### Prior Art
 
 - <https://npm.im/better-sqlite3>: @leafac/sqlite is a thin wrapper around better-sqlite3. The main differences are the support for tagged template literals and the native TypeScript support.
