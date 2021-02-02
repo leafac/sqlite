@@ -27,7 +27,7 @@ describe("sql", () => {
 });
 
 describe("Database", () => {
-  test("run()", async () => {
+  test("run()", () => {
     const database = new Database(":memory:");
     database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
@@ -45,7 +45,7 @@ describe("Database", () => {
     database.close();
   });
 
-  test("get()", async () => {
+  test("get()", () => {
     const database = new Database(":memory:");
     database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
@@ -63,7 +63,7 @@ describe("Database", () => {
     database.close();
   });
 
-  test("all()", async () => {
+  test("all()", () => {
     const database = new Database(":memory:");
     database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
@@ -87,7 +87,7 @@ describe("Database", () => {
     database.close();
   });
 
-  test("iterate()", async () => {
+  test("iterate()", () => {
     const database = new Database(":memory:");
     database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
