@@ -32,63 +32,53 @@ export function sql(
   return { source: sourceParts.join("?"), parameters };
 }
 
-export class Database {
-  betterSqlite3Database: BetterSqlite3Database.Database;
-  statements: Map<string, BetterSqlite3Database.Statement>;
+// FIXME: https://github.com/JoshuaWise/better-sqlite3/issues/551
+export class Database extends BetterSqlite3Database {
+  statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
-  constructor(path: string, options?: BetterSqlite3Database.Options) {
-    this.betterSqlite3Database = new BetterSqlite3Database(path, options);
-    this.statements = new Map<string, BetterSqlite3Database.Statement>();
-  }
-
-  exec({ source, parameters }: Query) {
+  execute: (query: Query) => this = (query) => {
+    const { source, parameters } = query;
     if (parameters.length > 0)
-      throw new Error(`Failed to exec() query with parameters`);
-    this.betterSqlite3Database.exec(source);
-  }
+      throw new Error(
+        `execute(${JSON.stringify(
+          query,
+          undefined,
+          2
+        )}) failed because execute() doesn’t support parameters`
+      );
+    return this.exec(source);
+  };
 
-  transaction<T>(fn: () => T): T {
-    return this.betterSqlite3Database.transaction(fn)();
-  }
-
-  pragma<T>(source: string, options?: BetterSqlite3Database.PragmaOptions): T {
-    return this.betterSqlite3Database.pragma(source, options);
-  }
-
-  async backup(
-    destination: string,
-    options?: BetterSqlite3Database.BackupOptions
-  ): Promise<BetterSqlite3Database.BackupMetadata> {
-    return await this.betterSqlite3Database.backup(destination, options);
-  }
-
-  close(): this {
-    this.betterSqlite3Database.close();
-    return this;
-  }
-
-  run({ source, parameters }: Query): BetterSqlite3Database.RunResult {
+  run: (query: Query) => BetterSqlite3Database.RunResult = ({
+    source,
+    parameters,
+  }) => {
     return this.getStatement(source).run(parameters);
-  }
+  };
 
-  get<T>({ source, parameters }: Query): T {
+  get: <T>(query: Query) => T = ({ source, parameters }) => {
     return this.getStatement(source).get(parameters);
-  }
+  };
 
-  all<T>({ source, parameters }: Query): T[] {
+  all: <T>(query: Query) => T[] = ({ source, parameters }) => {
     return this.getStatement(source).all(parameters);
-  }
+  };
 
-  iterate<T>({ source, parameters }: Query): IterableIterator<T> {
+  iterate: <T>(query: Query) => IterableIterator<T> = ({
+    source,
+    parameters,
+  }) => {
     return this.getStatement(source).iterate(parameters);
-  }
+  };
 
-  getStatement(source: string): BetterSqlite3Database.Statement {
+  getStatement: (source: string) => BetterSqlite3Database.Statement = (
+    source
+  ) => {
     let statement = this.statements.get(source);
     if (statement === undefined) {
-      statement = this.betterSqlite3Database.prepare(source);
+      statement = this.prepare(source);
       this.statements.set(source, statement);
     }
     return statement;
-  }
+  };
 }

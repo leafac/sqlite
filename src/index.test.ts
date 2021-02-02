@@ -29,7 +29,7 @@ describe("sql", () => {
 describe("Database", () => {
   test("run()", async () => {
     const database = new Database(":memory:");
-    database.exec(
+    database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
     );
     expect(
@@ -47,7 +47,7 @@ describe("Database", () => {
 
   test("get()", async () => {
     const database = new Database(":memory:");
-    database.exec(
+    database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
     );
     database.run(
@@ -65,7 +65,7 @@ describe("Database", () => {
 
   test("all()", async () => {
     const database = new Database(":memory:");
-    database.exec(
+    database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
     );
     database.run(
@@ -89,7 +89,7 @@ describe("Database", () => {
 
   test("iterate()", async () => {
     const database = new Database(":memory:");
-    database.exec(
+    database.execute(
       sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
     );
     database.run(
