@@ -25,7 +25,9 @@ export function sql(
         typeof parameter.source !== "string" ||
         !Array.isArray(parameter.parameters)
       )
-        throw new Error(`Failed to interpolate raw query ${parameter}`);
+        throw new Error(
+          `Failed to interpolate raw query ‘${parameter}’ because it wasn’t created with the sql tagged template literal`
+        );
       sourceParts.push(templatePart.slice(0, -1), parameter.source);
       parameters.push(...parameter.parameters);
     } else {
@@ -47,11 +49,11 @@ export class Database extends BetterSqlite3Database {
     const { source, parameters } = query;
     if (parameters.length > 0)
       throw new Error(
-        `execute(${JSON.stringify(
+        `Failed to execute(${JSON.stringify(
           query,
           undefined,
           2
-        )}) failed because execute() doesn’t support parameters`
+        )}) because execute() doesn’t support queries with parameters`
       );
     return this.exec(source);
   };

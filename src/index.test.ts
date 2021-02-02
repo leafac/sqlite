@@ -37,10 +37,32 @@ describe("sql", () => {
         "source": "SELECT * FROM users WHERE name = ? AND age = ?",
       }
     `);
+    expect(() => {
+      sql`SELECT * FROM users WHERE name = ${"Leandro Facchinetti"}$${` AND age = ${30}`}`;
+    }).toThrowErrorMatchingInlineSnapshot(
+      `"Failed to interpolate raw query ‘ AND age = 30’ because it wasn’t created with the sql tagged template literal"`
+    );
   });
 });
 
 describe("Database", () => {
+  test("execute()", () => {
+    const database = new Database(":memory:");
+    expect(() => {
+      database.execute(
+        sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+      );
+    }).toThrowErrorMatchingInlineSnapshot(`
+      "Failed to execute({
+        \\"source\\": \\"INSERT INTO users (name) VALUES (?)\\",
+        \\"parameters\\": [
+          \\"Leandro Facchinetti\\"
+        ]
+      }) because execute() doesn’t support queries with parameters"
+    `);
+    database.close();
+  });
+
   test("run()", () => {
     const database = new Database(":memory:");
     database.execute(
