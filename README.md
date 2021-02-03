@@ -16,7 +16,7 @@ Use @leafac/sqlite with [the es6-string-html Visual Studio Code extension](https
 
 ### Features, Usage, and Examples
 
-@leafac/sqlite is a [thin wrapper (fewer than 100 lines of code)](src/index.ts) around better-sqlite3 which adds the following features.
+@leafac/sqlite is a [thin wrapper (approximately 100 lines of code)](src/index.ts) around better-sqlite3 which adds the following features:
 
 #### Prepared Statements Management
 
@@ -44,7 +44,7 @@ The problem with this approach is that you must manage statements in your applic
 
 #### The `sql` Tagged Template Literal
 
-Queries in @leafac/sqlite must be created with the `sql` tagged template literal; simple untagged strings don’t work. Internally @leafac/sqlite uses the tagged template literal to manage the prepared statements and to guarantee that the parameters are escaped safely (see [§ How It Works](#how-it-works)).
+Queries in @leafac/sqlite must be created with the `sql` tagged template literal; simple untagged strings don’t work. @leafac/sqlite needs the tagged template literal to manage the prepared statements and to guarantee that the parameters are escaped safely (see [§ How It Works](#how-it-works)).
 
 For example:
 
@@ -73,11 +73,11 @@ No need for `npm install --save-dev @types/...`.
 
 ### API
 
-The `Database` class is subclass of a better-sqlite3 database, so all [better-sqlite3 database’s methods](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#class-database) are available in `Database`. If you need to use the traditional two-step workflow of explicitly preparing a statement as mentioned in [§ Prepared Statements Management](#prepared-statements-management), you can do that.
+The `Database` class is a subclass of the better-sqlite3 database, so all [better-sqlite3 database’s methods](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#class-database) are available in `Database`. If you need to use the traditional two-step workflow of explicitly preparing a statement as mentioned in [§ Prepared Statements Management](#prepared-statements-management), you can do that.
 
-The `Database` class introduces the following methods:
+The `Database` class introduces the following new methods:
 
-- `.run(query)`, `.get<T>(query)`, `.all<T>(query)`, and `.iterate<T>(query)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are: 1. These methods must be called on the database instead of on prepared statements; and 2. These methods work with queries generated with the `sql` tagged template literal.
+- `.run(query)`, `.get<T>(query)`, `.all<T>(query)`, and `.iterate<T>(query)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are: 1. These methods must be called on the database instead of on a prepared statement; and 2. These methods work with queries generated with the `sql` tagged template literal.
 
 - `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal. You must not interpolate any parameters into queries issued with `.execute()`.
 
@@ -126,11 +126,11 @@ You may also use the low-level `.getStatement(source: string)` method to get a h
 
 ### Related Projects
 
-- <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
 - <https://npm.im/@leafac/sqlite-migration>: A bare-bones migration system for @leafac/sqlite.
+- <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
 
 ### Prior Art
 
-- <https://npm.im/better-sqlite3>: @leafac/sqlite is a thin wrapper around better-sqlite3. The main differences are the support for tagged template literals and the native TypeScript support.
+- <https://npm.im/better-sqlite3>: The basis for @leafac/sqlite. The rest of this document explains how they’re different.
 - <https://npm.im/sql-template-strings>: This was the inspiration for using tagged template literals in this way. Unfortunately, sql-template-strings is incompatible with better-sqlite3, thus @leafac/sqlite.
 - <https://npm.im/html-template-tag>: I love (and stole) the idea of using `$${...}` to mark safe interpolation from html-template-tag.
