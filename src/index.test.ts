@@ -63,6 +63,126 @@ describe("Database", () => {
     database.close();
   });
 
+  test("executeTransaction()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    expect(() => {
+      database.executeTransaction(() => {
+        database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+        throw new Error("Rollback");
+      });
+    }).toThrowErrorMatchingInlineSnapshot(`"Rollback"`);
+    expect(
+      database.all<{ name: string }>(sql`SELECT * from users`)
+    ).toMatchInlineSnapshot(`Array []`);
+    expect(
+      database.executeTransaction(() => {
+        return database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+      })
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 1,
+      }
+    `);
+    expect(database.all<{ name: string }>(sql`SELECT * from users`))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+      ]
+    `);
+    database.close();
+  });
+
+  test("executeTransactionImmediate()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    expect(() => {
+      database.executeTransactionImmediate(() => {
+        database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+        throw new Error("Rollback");
+      });
+    }).toThrowErrorMatchingInlineSnapshot(`"Rollback"`);
+    expect(
+      database.all<{ name: string }>(sql`SELECT * from users`)
+    ).toMatchInlineSnapshot(`Array []`);
+    expect(
+      database.executeTransactionImmediate(() => {
+        return database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+      })
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 1,
+      }
+    `);
+    expect(database.all<{ name: string }>(sql`SELECT * from users`))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+      ]
+    `);
+    database.close();
+  });
+
+  test("executeTransactionExclusive()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    expect(() => {
+      database.executeTransactionExclusive(() => {
+        database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+        throw new Error("Rollback");
+      });
+    }).toThrowErrorMatchingInlineSnapshot(`"Rollback"`);
+    expect(
+      database.all<{ name: string }>(sql`SELECT * from users`)
+    ).toMatchInlineSnapshot(`Array []`);
+    expect(
+      database.executeTransactionExclusive(() => {
+        return database.run(
+          sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+        );
+      })
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 1,
+      }
+    `);
+    expect(database.all<{ name: string }>(sql`SELECT * from users`))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+      ]
+    `);
+    database.close();
+  });
+
   test("run()", () => {
     const database = new Database(":memory:");
     database.execute(

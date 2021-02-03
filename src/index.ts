@@ -58,6 +58,18 @@ export class Database extends BetterSqlite3Database {
     return this.exec(source);
   };
 
+  executeTransaction: <T>(fn: () => T) => T = (fn) => {
+    return this.transaction(fn)();
+  };
+
+  executeTransactionImmediate: <T>(fn: () => T) => T = (fn) => {
+    return this.transaction(fn).immediate();
+  };
+
+  executeTransactionExclusive: <T>(fn: () => T) => T = (fn) => {
+    return this.transaction(fn).exclusive();
+  };
+
   run: (query: Query) => BetterSqlite3Database.RunResult = ({
     source,
     parameters,
