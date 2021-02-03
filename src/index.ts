@@ -45,6 +45,28 @@ export function sql(
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
+  run: (query: Query) => BetterSqlite3Database.RunResult = ({
+    source,
+    parameters,
+  }) => {
+    return this.getStatement(source).run(parameters);
+  };
+
+  get: <T>(query: Query) => T = ({ source, parameters }) => {
+    return this.getStatement(source).get(parameters);
+  };
+
+  all: <T>(query: Query) => T[] = ({ source, parameters }) => {
+    return this.getStatement(source).all(parameters);
+  };
+
+  iterate: <T>(query: Query) => IterableIterator<T> = ({
+    source,
+    parameters,
+  }) => {
+    return this.getStatement(source).iterate(parameters);
+  };
+
   execute: (query: Query) => this = (query) => {
     const { source, parameters } = query;
     if (parameters.length > 0)
@@ -68,28 +90,6 @@ export class Database extends BetterSqlite3Database {
 
   executeTransactionExclusive: <T>(fn: () => T) => T = (fn) => {
     return this.transaction(fn).exclusive();
-  };
-
-  run: (query: Query) => BetterSqlite3Database.RunResult = ({
-    source,
-    parameters,
-  }) => {
-    return this.getStatement(source).run(parameters);
-  };
-
-  get: <T>(query: Query) => T = ({ source, parameters }) => {
-    return this.getStatement(source).get(parameters);
-  };
-
-  all: <T>(query: Query) => T[] = ({ source, parameters }) => {
-    return this.getStatement(source).all(parameters);
-  };
-
-  iterate: <T>(query: Query) => IterableIterator<T> = ({
-    source,
-    parameters,
-  }) => {
-    return this.getStatement(source).iterate(parameters);
   };
 
   getStatement: (source: string) => BetterSqlite3Database.Statement = (

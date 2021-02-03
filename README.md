@@ -67,6 +67,28 @@ You may interpolate raw SQL with the `$${...}` form, for example:
 sql`SELECT * FROM users WHERE name = ${"Leandro Facchinetti"} $${sql` AND age = ${30}`}`;
 ```
 
+#### Convenience Methods for Transactions
+
+In better-sqlite3, transactions follow a preparation/execution two-step process similar to the one followed by statements, as described in [§ Prepared Statements Management](#prepared-statements-management), for example:
+
+```typescript
+const transaction = database.transaction(() => {
+  // Doesn’t execute immediately
+});
+// Execute the transaction
+transaction();
+```
+
+@leafac/sqlite introduces convenience methods to execute a transaction in one step, for example:
+
+```typescript
+database.executeTransaction(() => {
+  // Executes immediately
+});
+```
+
+The function passed to the better-sqlite3 `.transaction()` method may have parameters, which will correspond to the arguments passed when executing the transaction. The function passed to the @leafac/sqlite `.executeTransaction()` method must not have any parameters.
+
 #### Native TypeScript Support
 
 No need for `npm install --save-dev @types/...`.
@@ -77,29 +99,22 @@ The `Database` class is a subclass of the better-sqlite3 database, so all [bette
 
 The `Database` class introduces the following new methods:
 
-- `.run(query)`, `.get<T>(query)`, `.all<T>(query)`, and `.iterate<T>(query)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are: 1. These methods must be called on the database instead of on a prepared statement; and 2. These methods work with queries generated with the `sql` tagged template literal.
+- `.run(query)`, `.get<T>(query)`, `.all<T>(query)`, and `.iterate<T>(query)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are:
 
-- `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal. You must not interpolate any parameters into queries issued with `.execute()`.
+  1. These methods must be called on the database instead of on a prepared statement.
+  2. These methods work with queries generated with the `sql` tagged template literal.
 
-- `.executeTransaction<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function), but simply executes the function `fn`, which should receive no arguments, instead of returning a function that you then have to call. For example:
+- `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal.
+
+  You must not interpolate any parameters into queries passed to `.execute()`; for example, the following throws an error:
 
   ```typescript
-  // better-sqlite3
-  const transaction = database.transaction(() => {
-    // Doesn’t execute immediately
-  });
-  // Execute the transaction
-  transaction();
-
-  // @leafac/sqlite
-  database.executeTransaction(() => {
-    // Executes immediately
-  });
+  database.execute(
+    sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+  ); // => Throws an error
   ```
 
-- `.executeTransactionImmediate<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction().immediate()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function). See discussion above on `.executeTransaction<T>(fn)` for details.
-
-- `.executeTransactionExclusive<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction().exclusive()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function). See discussion above on `.executeTransaction<T>(fn)` for details.
+- `.executeTransaction<T>(fn)`, `.executeTransactionImmediate<T>(fn)`, and `.executeTransactionExclusive<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction()`, `.transaction().immediate()`, and `.transaction().exclusive()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function), but execute the transaction immediately (see [§ Convenience Methods for Transactions](#convenience-methods-for-transactions)).
 
 ### How It Works
 

@@ -46,6 +46,90 @@ describe("sql", () => {
 });
 
 describe("Database", () => {
+  test("run()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    expect(
+      database.run(
+        sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+      )
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 1,
+      }
+    `);
+    database.close();
+  });
+
+  test("get()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    database.run(
+      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+    );
+    expect(database.get<{ name: string }>(sql`SELECT * from users`))
+      .toMatchInlineSnapshot(`
+      Object {
+        "id": 1,
+        "name": "Leandro Facchinetti",
+      }
+    `);
+    database.close();
+  });
+
+  test("all()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    database.run(
+      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
+    );
+    expect(database.all<{ name: string }>(sql`SELECT * from users`))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 2,
+          "name": "Linda Renner",
+        },
+      ]
+    `);
+    database.close();
+  });
+
+  test("iterate()", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
+    );
+    database.run(
+      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
+    );
+    expect([...database.iterate<{ name: string }>(sql`SELECT * from users`)])
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 2,
+          "name": "Linda Renner",
+        },
+      ]
+    `);
+    database.close();
+  });
+
   test("execute()", () => {
     const database = new Database(":memory:");
     expect(() => {
@@ -177,90 +261,6 @@ describe("Database", () => {
         Object {
           "id": 1,
           "name": "Leandro Facchinetti",
-        },
-      ]
-    `);
-    database.close();
-  });
-
-  test("run()", () => {
-    const database = new Database(":memory:");
-    database.execute(
-      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
-    );
-    expect(
-      database.run(
-        sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
-      )
-    ).toMatchInlineSnapshot(`
-      Object {
-        "changes": 1,
-        "lastInsertRowid": 1,
-      }
-    `);
-    database.close();
-  });
-
-  test("get()", () => {
-    const database = new Database(":memory:");
-    database.execute(
-      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
-    );
-    database.run(
-      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
-    );
-    expect(database.get<{ name: string }>(sql`SELECT * from users`))
-      .toMatchInlineSnapshot(`
-      Object {
-        "id": 1,
-        "name": "Leandro Facchinetti",
-      }
-    `);
-    database.close();
-  });
-
-  test("all()", () => {
-    const database = new Database(":memory:");
-    database.execute(
-      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
-    );
-    database.run(
-      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
-    );
-    expect(database.all<{ name: string }>(sql`SELECT * from users`))
-      .toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "id": 1,
-          "name": "Leandro Facchinetti",
-        },
-        Object {
-          "id": 2,
-          "name": "Linda Renner",
-        },
-      ]
-    `);
-    database.close();
-  });
-
-  test("iterate()", () => {
-    const database = new Database(":memory:");
-    database.execute(
-      sql`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT);`
-    );
-    database.run(
-      sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
-    );
-    expect([...database.iterate<{ name: string }>(sql`SELECT * from users`)])
-      .toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "id": 1,
-          "name": "Leandro Facchinetti",
-        },
-        Object {
-          "id": 2,
-          "name": "Linda Renner",
         },
       ]
     `);
