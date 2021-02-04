@@ -141,7 +141,7 @@ You may also use the low-level `.getStatement(source: string)` method to get a h
 
 ### Related Projects
 
-- <https://npm.im/@leafac/sqlite-migration>: A bare-bones migration system for @leafac/sqlite.
+- <https://npm.im/@leafac/sqlite-migration>: A lightweight migration system for @leafac/sqlite.
 - <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
 
 ### Prior Art
