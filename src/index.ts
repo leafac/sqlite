@@ -51,7 +51,7 @@ export class Database extends BetterSqlite3Database {
     return this.getStatement(source).run(parameters);
   };
 
-  get: <T>(query: Query) => T = ({ source, parameters }) => {
+  get: <T>(query: Query) => T | undefined = ({ source, parameters }) => {
     return this.getStatement(source).get(parameters);
   };
 
