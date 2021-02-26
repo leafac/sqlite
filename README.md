@@ -149,3 +149,4 @@ You may also use the low-level `.getStatement(source: string)` method to get a h
 - <https://npm.im/better-sqlite3>: The basis for @leafac/sqlite. The rest of this document explains how they’re different.
 - <https://npm.im/sql-template-strings>: This was the inspiration for using tagged template literals in this way. Unfortunately, sql-template-strings is incompatible with better-sqlite3, thus @leafac/sqlite.
 - <https://npm.im/html-template-tag>: I love (and stole) the idea of using `$${...}` to mark safe interpolation from html-template-tag.
+- <https://npm.im/package/pg-lit>, <https://npm.im/package/slonik>: These packages also feature tagged template literals for SQL, but they’re for [PostgreSQL](https://www.postgresql.org/) instead of SQLite.
