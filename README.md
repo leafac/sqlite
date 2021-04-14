@@ -99,10 +99,11 @@ The `Database` class is a subclass of the better-sqlite3 database, so all [bette
 
 The `Database` class introduces the following new methods:
 
-- `.run(query)`, `.get<T>(query)`, `.all<T>(query)`, and `.iterate<T>(query)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are:
+- `.run(query, options)`, `.get<T>(query, options)`, `.all<T>(query, options)`, and `.iterate<T>(query, options)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are:
 
   1. These methods must be called on the database instead of on a prepared statement.
   2. These methods work with queries generated with the `sql` tagged template literal.
+  3. **Advanced:** These methods accept an optional `options` parameter which should be an object with the `safeIntegers` field to control [the use of BigInt in the result](https://github.com/JoshuaWise/better-sqlite3/blob/v7.1.4/docs/integer.md). This changes the underlying statement until another query with the same statement sets `safeIntegers` to a different value.
 
 - `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal.
 
