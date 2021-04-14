@@ -266,4 +266,91 @@ describe("Database", () => {
     `);
     database.close();
   });
+
+  test("safeIntegers", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+    );
+    expect(
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+      )
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 1,
+      }
+    `);
+    expect(
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`,
+        { safeIntegers: true }
+      )
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 2n,
+      }
+    `);
+    expect(
+      database.run(sql`INSERT INTO "users" ("name") VALUES (${"Louie Renner"})`)
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 3,
+      }
+    `);
+    expect(
+      database.get<{ name: string }>(sql`SELECT * from "users"`, {
+        safeIntegers: true,
+      })
+    ).toMatchInlineSnapshot(`
+      Object {
+        "id": 1n,
+        "name": "Leandro Facchinetti",
+      }
+    `);
+    expect(
+      database.all<{ name: string }>(sql`SELECT * from "users"`, {
+        safeIntegers: true,
+      })
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1n,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 2n,
+          "name": "Linda Renner",
+        },
+        Object {
+          "id": 3n,
+          "name": "Louie Renner",
+        },
+      ]
+    `);
+    expect([
+      ...database.iterate<{ name: string }>(sql`SELECT * from "users"`, {
+        safeIntegers: true,
+      }),
+    ]).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1n,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 2n,
+          "name": "Linda Renner",
+        },
+        Object {
+          "id": 3n,
+          "name": "Louie Renner",
+        },
+      ]
+    `);
+    database.close();
+  });
 });

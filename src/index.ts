@@ -40,25 +40,38 @@ export function sql(
   return { source: sourceParts.join(""), parameters };
 }
 
+export interface Options {
+  safeIntegers?: boolean;
+}
+
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
 // FIXME: Use more straightforward inheritance: https://github.com/JoshuaWise/better-sqlite3/issues/551
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
-  run: (query: Query) => BetterSqlite3Database.RunResult = (query) => {
-    return this.getStatement(query.source).run(query.parameters);
+  run: (query: Query, options?: Options) => BetterSqlite3Database.RunResult = (
+    query,
+    options = {}
+  ) => {
+    return this.getStatement(query.source, options).run(query.parameters);
   };
 
-  get: <T>(query: Query) => T | undefined = (query) => {
-    return this.getStatement(query.source).get(query.parameters);
+  get: <T>(query: Query, options?: Options) => T | undefined = (
+    query,
+    options = {}
+  ) => {
+    return this.getStatement(query.source, options).get(query.parameters);
   };
 
-  all: <T>(query: Query) => T[] = (query) => {
-    return this.getStatement(query.source).all(query.parameters);
+  all: <T>(query: Query, options?: Options) => T[] = (query, options = {}) => {
+    return this.getStatement(query.source, options).all(query.parameters);
   };
 
-  iterate: <T>(query: Query) => IterableIterator<T> = (query) => {
-    return this.getStatement(query.source).iterate(query.parameters);
+  iterate: <T>(query: Query, options?: Options) => IterableIterator<T> = (
+    query,
+    options = {}
+  ) => {
+    return this.getStatement(query.source, options).iterate(query.parameters);
   };
 
   execute: (query: Query) => this = (query) => {
@@ -85,14 +98,16 @@ export class Database extends BetterSqlite3Database {
     return this.transaction(fn).exclusive();
   };
 
-  getStatement: (source: string) => BetterSqlite3Database.Statement = (
-    source
-  ) => {
+  getStatement: (
+    source: string,
+    options?: Options
+  ) => BetterSqlite3Database.Statement = (source, options = {}) => {
     let statement = this.statements.get(source);
     if (statement === undefined) {
       statement = this.prepare(source);
       this.statements.set(source, statement);
     }
+    statement.safeIntegers(options.safeIntegers ?? false);
     return statement;
   };
 }
