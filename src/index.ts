@@ -45,31 +45,24 @@ export function sql(
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
-  run: (query: Query) => BetterSqlite3Database.RunResult = ({
-    source,
-    parameters,
-  }) => {
-    return this.getStatement(source).run(parameters);
+  run: (query: Query) => BetterSqlite3Database.RunResult = (query) => {
+    return this.getStatement(query.source).run(query.parameters);
   };
 
-  get: <T>(query: Query) => T | undefined = ({ source, parameters }) => {
-    return this.getStatement(source).get(parameters);
+  get: <T>(query: Query) => T | undefined = (query) => {
+    return this.getStatement(query.source).get(query.parameters);
   };
 
-  all: <T>(query: Query) => T[] = ({ source, parameters }) => {
-    return this.getStatement(source).all(parameters);
+  all: <T>(query: Query) => T[] = (query) => {
+    return this.getStatement(query.source).all(query.parameters);
   };
 
-  iterate: <T>(query: Query) => IterableIterator<T> = ({
-    source,
-    parameters,
-  }) => {
-    return this.getStatement(source).iterate(parameters);
+  iterate: <T>(query: Query) => IterableIterator<T> = (query) => {
+    return this.getStatement(query.source).iterate(query.parameters);
   };
 
   execute: (query: Query) => this = (query) => {
-    const { source, parameters } = query;
-    if (parameters.length > 0)
+    if (query.parameters.length > 0)
       throw new Error(
         `Failed to execute(${JSON.stringify(
           query,
@@ -77,7 +70,7 @@ export class Database extends BetterSqlite3Database {
           2
         )}) because execute() doesn’t support queries with parameters`
       );
-    return this.exec(source);
+    return this.exec(query.source);
   };
 
   executeTransaction: <T>(fn: () => T) => T = (fn) => {
