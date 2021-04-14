@@ -28,10 +28,10 @@ import BetterSqlite3Database from "better-sqlite3";
 const betterSqlite3Database = new BetterSqlite3Database(":memory:");
 
 betterSqlite3Database.exec(
-  `CREATE TABLE users (id INTEGER PRIMARY KEY  AUTOINCREMENT, name TEXT);`
+  `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
 );
 const statement = betterSqlite3Database.prepare(
-  `INSERT INTO users (name) VALUES (?)`
+  `INSERT INTO "users" ("name") VALUES (?)`
 );
 console.log(statement.run("Leandro Facchinetti")); // => { changes: 1, lastInsertRowid: 1 }
 ```
@@ -53,18 +53,20 @@ import { Database, sql } from "@leafac/sqlite";
 
 const database = new Database(":memory:");
 database.execute(
-  sql`CREATE TABLE users (id INTEGER PRIMARY KEY  AUTOINCREMENT, name TEXT);`
+  sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
 );
 console.log(
-  database.run(sql`INSERT INTO users (name) VALUES ($ {"Leandro Facchinetti"})`)
+  database.run(
+    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+  )
 ); // => { changes: 1, lastInsertRowid: 1 }
-console.log(database.get<{ name: string }>(sql`SELECT * from  users`)); // => { id: 1, name: 'Leandro Facchinetti' }
+console.log(database.get<{ name: string }>(sql`SELECT * from "users"`)); // => { id: 1, name: 'Leandro Facchinetti' }
 ```
 
 You may interpolate raw SQL with the `$${...}` form, for example:
 
 ```typescript
-sql`SELECT * FROM users WHERE name = ${"Leandro Facchinetti"} $${sql` AND age = ${30}`}`;
+sql`SELECT * FROM "users" WHERE "name" = ${"Leandro Facchinetti"} $${sql` AND "age" = ${30}`}`;
 ```
 
 #### Convenience Methods for Transactions
@@ -103,7 +105,21 @@ The `Database` class introduces the following new methods:
 
   1. These methods must be called on the database instead of on a prepared statement.
   2. These methods work with queries generated with the `sql` tagged template literal.
-  3. **Advanced:** These methods accept an optional `options` parameter which should be an object with the `safeIntegers` field to control [the use of BigInt in the result](https://github.com/JoshuaWise/better-sqlite3/blob/v7.1.4/docs/integer.md). This changes the underlying statement until another query with the same statement sets `safeIntegers` to a different value.
+  3. **Advanced:** These methods accept an optional `options` parameter which should be an object with the `safeIntegers` field to control [the use of BigInt in the result](https://github.com/JoshuaWise/better-sqlite3/blob/v7.1.4/docs/integer.md). This changes the underlying statement until another query with the same statement sets `safeIntegers` to a different value. For example:
+
+     ```typescript
+     console.log(
+       database.get<{ name: string }>(sql`SELECT * from "users"`, {
+         safeIntegers: true,
+       })
+     ); // => { id: 1n, name: 'Leandro Facchinetti' }
+     console.log(database.get<{ name: string }>(sql`SELECT * from "users"`)); // => { id: 1n, name: 'Leandro Facchinetti' }
+     console.log(
+       database.get<{ name: string }>(sql`SELECT * from "users"`, {
+         safeIntegers: false,
+       })
+     ); // => { id: 1, name: 'Leandro Facchinetti' }
+     ```
 
 - `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal.
 
@@ -111,7 +127,7 @@ The `Database` class introduces the following new methods:
 
   ```typescript
   database.execute(
-    sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`
+    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
   ); // => Throws an error
   ```
 
@@ -122,14 +138,14 @@ The `Database` class introduces the following new methods:
 The `sql` tag produces a data structure with the source of the query along with the parameters, for example, the following query:
 
 ```javascript
-sql`INSERT INTO users (name) VALUES (${"Leandro Facchinetti"})`;
+sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`;
 ```
 
 becomes the following data structure:
 
 ```json
 {
-  "source": "INSERT INTO users (name) VALUES (?)",
+  "source": "INSERT INTO \"users\" (\"name\") VALUES (?)",
   "parameters": ["Leandro Facchinetti"]
 }
 ```
@@ -138,7 +154,7 @@ The `Database` keeps a map from query sources to better-sqlite3 prepared stateme
 
 There’s no cache eviction policy in @leafac/sqlite. The prepared statements for every query ever run hang around in memory for as long as the database object is alive (the statements aren’t eligible for garbage collection because they’re in the map). In most cases, that’s fine because there are only a limited number of queries; it’s the parameters that change. If that becomes a problem for you, you may access the cache under the `statements` property and implement your own cache eviction policy.
 
-You may also use the low-level `.getStatement(source: string)` method to get a hold of the underlying prepared statement in the cache (for example, to use [`.pluck()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#plucktogglestate---this), [`.expand()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#expandtogglestate---this), [`.raw()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#rawtogglestate---this), [`.columns()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#columns---array-of-objects), and [`.bind()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#bindbindparameters---this)—though `.bind()` will probably render the prepared statement unusable by @leafac/sqlite).
+You may also use the low-level `.getStatement(source: string, options: Options)` method to get a hold of the underlying prepared statement in the cache (for example, to use [`.pluck()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#plucktogglestate---this), [`.expand()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#expandtogglestate---this), [`.raw()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#rawtogglestate---this), [`.columns()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#columns---array-of-objects), and [`.bind()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#bindbindparameters---this)—though `.bind()` will probably render the prepared statement unusable by @leafac/sqlite).
 
 ### Related Projects
 
