@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@types/better-sqlite3": "^5.4.1",
-    "better-sqlite3": "^7.1.2"
+    "better-sqlite3": "^7.1.4"
   },
   "devDependencies": {
     "@types/jest": "^26.0.20",
