@@ -45,36 +45,26 @@ export interface Options {
 }
 
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
-// FIXME: Use more straightforward inheritance: https://github.com/JoshuaWise/better-sqlite3/issues/551
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
-  run: (query: Query, options?: Options) => BetterSqlite3Database.RunResult = (
-    query,
-    options = {}
-  ) => {
+  run(query: Query, options: Options = {}): BetterSqlite3Database.RunResult {
     return this.getStatement(query.source, options).run(query.parameters);
-  };
+  }
 
-  get: <T>(query: Query, options?: Options) => T | undefined = (
-    query,
-    options = {}
-  ) => {
+  get<T>(query: Query, options: Options = {}): T | undefined {
     return this.getStatement(query.source, options).get(query.parameters);
-  };
+  }
 
-  all: <T>(query: Query, options?: Options) => T[] = (query, options = {}) => {
+  all<T>(query: Query, options: Options = {}): T[] {
     return this.getStatement(query.source, options).all(query.parameters);
-  };
+  }
 
-  iterate: <T>(query: Query, options?: Options) => IterableIterator<T> = (
-    query,
-    options = {}
-  ) => {
+  iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
     return this.getStatement(query.source, options).iterate(query.parameters);
-  };
+  }
 
-  execute: (query: Query) => this = (query) => {
+  execute(query: Query): this {
     if (query.parameters.length > 0)
       throw new Error(
         `Failed to execute(${JSON.stringify(
@@ -84,24 +74,24 @@ export class Database extends BetterSqlite3Database {
         )}) because execute() doesn’t support queries with parameters`
       );
     return this.exec(query.source);
-  };
+  }
 
-  executeTransaction: <T>(fn: () => T) => T = (fn) => {
+  executeTransaction<T>(fn: () => T): T {
     return this.transaction(fn)();
-  };
+  }
 
-  executeTransactionImmediate: <T>(fn: () => T) => T = (fn) => {
+  executeTransactionImmediate<T>(fn: () => T): T {
     return this.transaction(fn).immediate();
-  };
+  }
 
-  executeTransactionExclusive: <T>(fn: () => T) => T = (fn) => {
+  executeTransactionExclusive<T>(fn: () => T): T {
     return this.transaction(fn).exclusive();
-  };
+  }
 
-  getStatement: (
+  getStatement(
     source: string,
-    options?: Options
-  ) => BetterSqlite3Database.Statement = (source, options = {}) => {
+    options: Options = {}
+  ): BetterSqlite3Database.Statement {
     let statement = this.statements.get(source);
     if (statement === undefined) {
       statement = this.prepare(source);
@@ -110,5 +100,5 @@ export class Database extends BetterSqlite3Database {
     if (typeof options.safeIntegers === "boolean")
       statement.safeIntegers(options.safeIntegers);
     return statement;
-  };
+  }
 }
