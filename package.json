@@ -1,6 +1,6 @@
 {
   "name": "@leafac/sqlite",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "better-sqlite3 with tagged template literals",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
