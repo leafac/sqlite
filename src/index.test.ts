@@ -298,7 +298,18 @@ describe("Database", () => {
     ).toMatchInlineSnapshot(`
       Object {
         "changes": 1,
-        "lastInsertRowid": 3,
+        "lastInsertRowid": 3n,
+      }
+    `);
+    expect(
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Cadeau Renner"})`,
+        { safeIntegers: false }
+      )
+    ).toMatchInlineSnapshot(`
+      Object {
+        "changes": 1,
+        "lastInsertRowid": 4,
       }
     `);
     expect(
@@ -329,6 +340,10 @@ describe("Database", () => {
           "id": 3n,
           "name": "Louie Renner",
         },
+        Object {
+          "id": 4n,
+          "name": "Cadeau Renner",
+        },
       ]
     `);
     expect([
@@ -348,6 +363,10 @@ describe("Database", () => {
         Object {
           "id": 3n,
           "name": "Louie Renner",
+        },
+        Object {
+          "id": 4n,
+          "name": "Cadeau Renner",
         },
       ]
     `);

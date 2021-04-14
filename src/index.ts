@@ -107,7 +107,8 @@ export class Database extends BetterSqlite3Database {
       statement = this.prepare(source);
       this.statements.set(source, statement);
     }
-    statement.safeIntegers(options.safeIntegers ?? false);
+    if (typeof options.safeIntegers === "boolean")
+      statement.safeIntegers(options.safeIntegers);
     return statement;
   };
 }
