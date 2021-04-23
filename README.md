@@ -6,6 +6,12 @@
 <a href="https://github.com/leafac/sqlite/actions"><img src="https://github.com/leafac/sqlite/workflows/.github/workflows/main.yml/badge.svg" alt="Continuous Integration"></a>
 </p>
 
+### Videos
+
+[<img src="https://img.youtube.com/vi/3PCpXOPcVlM/0.jpg" width="200" /><br />Demonstration](https://youtu.be/3PCpXOPcVlM)
+
+[<img src="https://img.youtube.com/vi/ORdYNOwpcsY/0.jpg" width="200" /><br />Code Review](https://youtu.be/ORdYNOwpcsY)
+
 ### Installation
 
 ```console
