@@ -101,6 +101,50 @@ The function passed to the better-sqlite3 `.transaction()` method may have param
 
 No need for `npm install --save-dev @types/...`.
 
+#### A Lightweight Migration System
+
+For example:
+
+```typescript
+// At an early point in the process of developing an application:
+database.migrate(
+  sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+);
+
+// At a later point a new migration is added:
+database.migrate(
+  sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+
+  (database) => {
+    database.run(
+      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+    );
+  }
+);
+```
+
+The `.migrate()` method receives as parameters `` sql`...` `` queries and arbitrary functions. Only the parameters that have not been run before are executed to bring the database up to the most recent version, so you should call `.migrate()` at your application startup. Migrations are run on a transaction, so if one of them fails everything rolls back (if your arbitrary functions have side-effects you’ll have to manage them yourself).
+
+##### No Down Migrations
+
+Most migration systems provide a way to **undo** migrations; something called **down** migrations. `.migrate()` doesn’t provide a down migration mechanism.
+
+I believe that down migrations are more trouble to maintain (they can be a lot of work!) than they’re worth, particularly in small applications. Why? Because down migrations have two main selling points:
+
+1. You may go back and forward with the database schema in development (think of alternating back and forth while working on different feature branches that change the database schema).
+2. You may rollback a deployment that goes wrong in production.
+
+But I don’t think these selling points hold up:
+
+1. You may recreate the database from scratch whenever you need in development.
+2. You almost never want to run a down migration in production because that would make you lose data.
+
+In case something goes wrong, `.migrate()` requires you to write a new migration that undoes the troublesome previous migration. The only way through is forward!
+
+##### Don’t Change Migrations That Already Run
+
+`.migrate()` doesn’t run migrations that it ran in the past, so if you change an existing migration, it won’t take effect. `.migrate()` has no mechanism to detect and warn about this kind of issue (it can’t, because arbitrary functions don’t lend themselves to this kind of inspection).
+
 ### API
 
 The `Database` class is a subclass of the better-sqlite3 database, so all [better-sqlite3 database’s methods](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#class-database) are available in `Database`. If you need to use the traditional two-step workflow of explicitly preparing a statement as mentioned in [§ Prepared Statements Management](#prepared-statements-management), you can do that.
@@ -141,6 +185,8 @@ The `Database` class introduces the following new methods:
 
 ### How It Works
 
+#### Prepared Statements Management & The `sql` Tagged Template Literal
+
 The `sql` tag produces a data structure with the source of the query along with the parameters, for example, the following query:
 
 ```javascript
@@ -162,9 +208,12 @@ There’s no cache eviction policy in @leafac/sqlite. The prepared statements fo
 
 You may also use the low-level `.getStatement(source: string, options: Options)` method to get a hold of the underlying prepared statement in the cache (for example, to use [`.pluck()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#plucktogglestate---this), [`.expand()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#expandtogglestate---this), [`.raw()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#rawtogglestate---this), [`.columns()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#columns---array-of-objects), and [`.bind()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#bindbindparameters---this)—though `.bind()` will probably render the prepared statement unusable by @leafac/sqlite).
 
+#### Migration System
+
+`.migrate()` uses the [`user_version` SQLite PRAGMA](https://www.sqlite.org/pragma.html#pragma_user_version) to store the number of migrations it ran in the past, and consults this number to avoid re-running migrations.
+
 ### Related Projects
 
-- <https://npm.im/@leafac/sqlite-migration>: A lightweight migration system for @leafac/sqlite.
 - <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
 
 ### Prior Art
@@ -173,3 +222,5 @@ You may also use the low-level `.getStatement(source: string, options: Options)`
 - <https://npm.im/sql-template-strings>: This was the inspiration for using tagged template literals in this way. Unfortunately, sql-template-strings is incompatible with better-sqlite3, thus @leafac/sqlite.
 - <https://npm.im/html-template-tag>: I love (and stole) the idea of using `$${...}` to mark safe interpolation from html-template-tag.
 - <https://npm.im/package/pg-lit>, <https://npm.im/package/slonik>: These packages also feature tagged template literals for SQL, but they’re for [PostgreSQL](https://www.postgresql.org/) instead of SQLite.
+- <https://npm.im/sqlite>, and <https://npm.im/better-sqlite3-helper>: These packages include lightweight migration systems. `.migrate()` is even more lightweight: It doesn’t support **down** migrations and it requires the migrations to be passed as an array, as opposed to, for example, being stored in SQL files. (But you can come up with this array in any way you want, including, for example, reading from a bunch of SQL files.)
+- <https://github.com/trevyn/turbosql>: After having published `.migrate()` the author of Turbosql [reached out](https://github.com/leafac/sqlite-migration/issues/1) to say that they independently arrived at a similar design, but in the Rust ecosystem instead of Node.js. It’s great to have company!

@@ -88,6 +88,17 @@ export class Database extends BetterSqlite3Database {
     return this.transaction(fn).exclusive();
   }
 
+  migrate(...migrations: (Query | ((database: this) => void))[]): void {
+    this.executeTransaction(() => {
+      for (const migration of migrations.slice(
+        this.pragma("user_version", { simple: true })
+      ))
+        if (typeof migration === "function") migration(this);
+        else this.execute(migration);
+      this.pragma(`user_version = ${migrations.length}`);
+    });
+  }
+
   getStatement(
     source: string,
     options: Options = {}

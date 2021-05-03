@@ -267,6 +267,81 @@ describe("Database", () => {
     database.close();
   });
 
+  test("migrate()", () => {
+    const database = new Database(":memory:");
+    let counter = 0;
+    database.migrate(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+      () => {
+        counter++;
+      }
+    );
+    expect(counter).toEqual(1);
+    database.migrate(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+      () => {
+        counter++;
+      }
+    );
+    expect(counter).toEqual(1);
+    database.migrate(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+      () => {
+        counter++;
+      },
+      () => {
+        counter++;
+      }
+    );
+    expect(counter).toEqual(2);
+    expect(() => {
+      database.migrate(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+        () => {
+          counter++;
+        },
+        () => {
+          counter++;
+        },
+        (database) => {
+          database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+        },
+        () => {
+          throw new Error("Should rollback");
+        }
+      );
+    }).toThrowErrorMatchingInlineSnapshot(`"Should rollback"`);
+    expect(
+      database.all<{ name: string }>(sql`SELECT * from "users"`)
+    ).toMatchInlineSnapshot(`Array []`);
+    database.migrate(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+      () => {
+        counter++;
+      },
+      () => {
+        counter++;
+      },
+      (database) => {
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+        );
+      }
+    );
+    expect(database.all<{ name: string }>(sql`SELECT * from "users"`))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+      ]
+    `);
+    database.close();
+  });
+
   test("safeIntegers", () => {
     const database = new Database(":memory:");
     database.execute(
