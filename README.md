@@ -1,3 +1,10 @@
+
+- [ ] Return a dump of the final schema
+    - [ ] https://github.com/leafac/sqlite-migration/issues/1
+    - [ ] https://github.com/trevyn/turbosql/blob/2e46e42a78f929cb2492a87e7124ba49d01178ca/turbosql-impl/src/lib.rs#L281
+- [ ] One more reason why forward only migrations make sense: alter table is limited in sqlite3
+
+
 <h1 align="center">@leafac/sqlite</h1>
 <h3 align="center"><a href="https://npm.im/better-sqlite3">better-sqlite3</a> with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">tagged template literals</a></h3>
 <p align="center">
