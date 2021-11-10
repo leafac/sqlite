@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
-    "rootDir": "source",
-    "outDir": "distribution",
+    "rootDir": "./source/",
+    "outDir": "./distribution/",
 
-    "target": "ES2019",
-    "module": "commonjs",
-    "esModuleInterop": true,
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "target": "ES2020",
+    "allowSyntheticDefaultImports": true,
 
     "declaration": true,
     "declarationMap": true,
