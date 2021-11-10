@@ -30,6 +30,14 @@ export function sql(
         );
       sourceParts.push(templatePart.slice(0, -1), parameter.source);
       parameters.push(...parameter.parameters);
+    } else if (Array.isArray(parameter)) {
+      sourceParts.push(
+        templatePart,
+        "(",
+        parameter.map(() => "?").join(","),
+        ")"
+      );
+      parameters.push(...parameter);
     } else {
       sourceParts.push(templatePart, "?");
       parameters.push(parameter);

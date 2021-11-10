@@ -342,6 +342,37 @@ describe("Database", () => {
     database.close();
   });
 
+  test("arrayParameter", () => {
+    const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+    );
+    database.run(
+      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"}), (${"David Adler"})`
+    );
+
+    expect(
+      database.all<{ name: string }>(
+        sql`SELECT * from "users" WHERE name IN ${[
+          "Leandro Facchinetti",
+          "David Adler"
+        ]}`
+      )
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 3,
+          "name": "David Adler",
+        },
+      ]
+    `);
+    database.close();
+  });
+
   test("safeIntegers", () => {
     const database = new Database(":memory:");
     database.execute(
@@ -389,7 +420,7 @@ describe("Database", () => {
     `);
     expect(
       database.get<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true,
+        safeIntegers: true
       })
     ).toMatchInlineSnapshot(`
       Object {
@@ -399,7 +430,7 @@ describe("Database", () => {
     `);
     expect(
       database.all<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true,
+        safeIntegers: true
       })
     ).toMatchInlineSnapshot(`
       Array [
@@ -423,8 +454,8 @@ describe("Database", () => {
     `);
     expect([
       ...database.iterate<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true,
-      }),
+        safeIntegers: true
+      })
     ]).toMatchInlineSnapshot(`
       Array [
         Object {
