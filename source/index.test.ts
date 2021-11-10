@@ -355,7 +355,7 @@ describe("Database", () => {
       database.all<{ name: string }>(
         sql`SELECT * from "users" WHERE name IN ${[
           "Leandro Facchinetti",
-          "David Adler"
+          "David Adler",
         ]}`
       )
     ).toMatchInlineSnapshot(`
@@ -420,7 +420,7 @@ describe("Database", () => {
     `);
     expect(
       database.get<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true
+        safeIntegers: true,
       })
     ).toMatchInlineSnapshot(`
       Object {
@@ -430,7 +430,7 @@ describe("Database", () => {
     `);
     expect(
       database.all<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true
+        safeIntegers: true,
       })
     ).toMatchInlineSnapshot(`
       Array [
@@ -454,8 +454,8 @@ describe("Database", () => {
     `);
     expect([
       ...database.iterate<{ name: string }>(sql`SELECT * from "users"`, {
-        safeIntegers: true
-      })
+        safeIntegers: true,
+      }),
     ]).toMatchInlineSnapshot(`
       Array [
         Object {
