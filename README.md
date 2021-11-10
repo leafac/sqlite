@@ -6,6 +6,8 @@
 I think the documentation should be more like a fork of the documentation of better-sqlite3 otherwise it’s a prerequisite to read the better-sqlite3 docs and understand what you’re wrapper does. I think the current docs should be more of a footnote. Otherwise I wouldn’t see people taking it seriously as they are quickly trying to evaluate a library and browse the API.
 
 Also the migration stuff is awesome but it should be more transparent how it works. ie the “pragma how it works” section should be inline with the migration docs IMO. Also a few examples of how to check the current migration scheme version would be helpful.
+
+Document the IN operator and how it may blow up the cache (https://github.com/leafac/sqlite/pull/2)
 -->
 
 <h1 align="center">@leafac/sqlite</h1>
