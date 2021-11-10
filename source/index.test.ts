@@ -23,6 +23,27 @@ describe("sql", () => {
         "source": "INSERT INTO \\"users\\" (\\"name\\") VALUES (?)",
       }
     `);
+    expect(sql`SELECT * from "users" WHERE "name" IN ${[]}`)
+      .toMatchInlineSnapshot(`
+      Object {
+        "parameters": Array [],
+        "source": "SELECT * from \\"users\\" WHERE \\"name\\" IN ()",
+      }
+    `);
+    expect(
+      sql`SELECT * from "users" WHERE "name" IN ${[
+        "Leandro Facchinetti",
+        "David Adler",
+      ]}`
+    ).toMatchInlineSnapshot(`
+      Object {
+        "parameters": Array [
+          "Leandro Facchinetti",
+          "David Adler",
+        ],
+        "source": "SELECT * from \\"users\\" WHERE \\"name\\" IN (?,?)",
+      }
+    `);
   });
 
   test("Raw interpolation", () => {
@@ -91,6 +112,7 @@ describe("Database", () => {
       sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
     );
     database.run(sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`);
+    database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
     expect(database.all<{ name: string }>(sql`SELECT * from "users"`))
       .toMatchInlineSnapshot(`
       Array [
@@ -101,6 +123,34 @@ describe("Database", () => {
         Object {
           "id": 2,
           "name": "Linda Renner",
+        },
+        Object {
+          "id": 3,
+          "name": "David Adler",
+        },
+      ]
+    `);
+    expect(
+      database.all<{ name: string }>(
+        sql`SELECT * from "users" WHERE "name" IN ${[]}`
+      )
+    ).toMatchInlineSnapshot(`Array []`);
+    expect(
+      database.all<{ name: string }>(
+        sql`SELECT * from "users" WHERE "name" IN ${[
+          "Leandro Facchinetti",
+          "David Adler",
+        ]}`
+      )
+    ).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "id": 1,
+          "name": "Leandro Facchinetti",
+        },
+        Object {
+          "id": 3,
+          "name": "David Adler",
         },
       ]
     `);
@@ -341,39 +391,6 @@ describe("Database", () => {
         Object {
           "id": 1,
           "name": "Leandro Facchinetti",
-        },
-      ]
-    `);
-    database.close();
-  });
-
-  test("arrayParameter", () => {
-    const database = new Database(":memory:");
-    database.execute(
-      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
-    );
-    database.run(
-      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-    );
-    database.run(sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`);
-    database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
-
-    expect(
-      database.all<{ name: string }>(
-        sql`SELECT * from "users" WHERE name IN ${[
-          "Leandro Facchinetti",
-          "David Adler",
-        ]}`
-      )
-    ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "id": 1,
-          "name": "Leandro Facchinetti",
-        },
-        Object {
-          "id": 3,
-          "name": "David Adler",
         },
       ]
     `);
