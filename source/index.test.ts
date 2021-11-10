@@ -88,8 +88,9 @@ describe("Database", () => {
       sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
     );
     database.run(
-      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
+      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
     );
+    database.run(sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`);
     expect(database.all<{ name: string }>(sql`SELECT * from "users"`))
       .toMatchInlineSnapshot(`
       Array [
@@ -112,8 +113,9 @@ describe("Database", () => {
       sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
     );
     database.run(
-      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"})`
+      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
     );
+    database.run(sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`);
     expect([...database.iterate<{ name: string }>(sql`SELECT * from "users"`)])
       .toMatchInlineSnapshot(`
       Array [
@@ -132,6 +134,9 @@ describe("Database", () => {
 
   test("execute()", () => {
     const database = new Database(":memory:");
+    database.execute(
+      sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+    );
     expect(() => {
       database.execute(
         sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
@@ -348,8 +353,10 @@ describe("Database", () => {
       sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
     );
     database.run(
-      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"}), (${"Linda Renner"}), (${"David Adler"})`
+      sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
     );
+    database.run(sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`);
+    database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
 
     expect(
       database.all<{ name: string }>(
