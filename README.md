@@ -236,3 +236,10 @@ You may also use the low-level `.getStatement(source: string, options: Options)`
 - <https://npm.im/package/pg-lit>, <https://npm.im/package/slonik>: These packages also feature tagged template literals for SQL, but they’re for [PostgreSQL](https://www.postgresql.org/) instead of SQLite.
 - <https://npm.im/sqlite>, and <https://npm.im/better-sqlite3-helper>: These packages include lightweight migration systems. `.migrate()` is even more lightweight: It doesn’t support **down** migrations and it requires the migrations to be passed as an array, as opposed to, for example, being stored in SQL files. (But you can come up with this array in any way you want, including, for example, reading from a bunch of SQL files.)
 - <https://github.com/trevyn/turbosql>: After having published `.migrate()` the author of Turbosql [reached out](https://github.com/leafac/sqlite-migration/issues/1) to say that they independently arrived at a similar design, but in the Rust ecosystem instead of Node.js. It’s great to have company!
+
+### Changelog
+
+#### 2.0.0
+
+- [ESM-only](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
+- Add support for the `IN` operator (https://github.com/leafac/sqlite/pull/2, thanks @mfbx9da4).
