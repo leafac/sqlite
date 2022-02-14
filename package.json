@@ -1,7 +1,7 @@
 {
   "name": "@leafac/sqlite",
   "version": "2.0.5",
-  "description": "better-sqlite3 with tagged template literals",
+  "description": "Radically Straightforward SQLite",
   "exports": "./distribution/index.js",
   "types": "./distribution/index.d.ts",
   "repository": "leafac/sqlite",
