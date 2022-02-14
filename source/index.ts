@@ -424,6 +424,114 @@ export class Database extends BetterSqlite3Database {
       statement.safeIntegers(options.safeIntegers);
     return statement;
   }
+
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.deepEqual(
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+        ),
+        {
+          changes: 1,
+          lastInsertRowid: 1,
+        }
+      );
+      assert.deepEqual(
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`,
+          { safeIntegers: true }
+        ),
+        {
+          changes: 1,
+          lastInsertRowid: 2n,
+        }
+      );
+      assert.deepEqual(
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Louie Renner"})`
+        ),
+        {
+          changes: 1,
+          lastInsertRowid: 3n,
+        }
+      );
+      assert.deepEqual(
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Cadeau Renner"})`,
+          { safeIntegers: false }
+        ),
+        {
+          changes: 1,
+          lastInsertRowid: 4,
+        }
+      );
+      assert.deepEqual(
+        database.get<{ name: string }>(sql`SELECT "id", "name" FROM "users"`, {
+          safeIntegers: true,
+        }),
+        {
+          id: 1n,
+          name: "Leandro Facchinetti",
+        }
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`, {
+          safeIntegers: true,
+        }),
+        [
+          {
+            id: 1n,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 2n,
+            name: "Linda Renner",
+          },
+          {
+            id: 3n,
+            name: "Louie Renner",
+          },
+          {
+            id: 4n,
+            name: "Cadeau Renner",
+          },
+        ]
+      );
+      assert.deepEqual(
+        [
+          ...database.iterate<{ name: string }>(
+            sql`SELECT "id", "name" FROM "users"`,
+            {
+              safeIntegers: true,
+            }
+          ),
+        ],
+        [
+          {
+            id: 1n,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 2n,
+            name: "Linda Renner",
+          },
+          {
+            id: 3n,
+            name: "Louie Renner",
+          },
+          {
+            id: 4n,
+            name: "Cadeau Renner",
+          },
+        ]
+      );
+      database.close();
+    }
+  }
 }
 
 export function sql(
