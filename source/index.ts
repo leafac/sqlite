@@ -14,8 +14,49 @@ export interface Query {
 export class Database extends BetterSqlite3Database {
   statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
+  execute(query: Query): this {
+    if (query.parameters.length > 0)
+      throw new Error(
+        `Failed to execute(${JSON.stringify(
+          query,
+          undefined,
+          2
+        )}) because execute() doesn’t support queries with parameters`
+      );
+    return this.exec(query.source);
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.throws(() => {
+        database.execute(
+          sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+        );
+      });
+      database.close();
+    }
+  }
+
   run(query: Query, options: Options = {}): BetterSqlite3Database.RunResult {
     return this.getStatement(query.source, options).run(query.parameters);
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.deepEqual(
+        database.run(
+          sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+        ),
+        { changes: 1, lastInsertRowid: 1 }
+      );
+      database.close();
+    }
   }
 
   get<T>(query: Query, options: Options = {}): T | undefined {
@@ -28,18 +69,6 @@ export class Database extends BetterSqlite3Database {
 
   iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
     return this.getStatement(query.source, options).iterate(query.parameters);
-  }
-
-  execute(query: Query): this {
-    if (query.parameters.length > 0)
-      throw new Error(
-        `Failed to execute(${JSON.stringify(
-          query,
-          undefined,
-          2
-        )}) because execute() doesn’t support queries with parameters`
-      );
-    return this.exec(query.source);
   }
 
   executeTransaction<T>(fn: () => T): T {
