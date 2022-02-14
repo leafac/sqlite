@@ -106,9 +106,17 @@ export class Database extends BetterSqlite3Database {
       database.run(
         sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`
       );
-      database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
+      database.run(
+        sql`
+          INSERT INTO "users" ("name") VALUES (${"David Adler"})
+        `
+      );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         [
           {
             id: 1,
@@ -206,7 +214,11 @@ export class Database extends BetterSqlite3Database {
         });
       });
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         []
       );
       assert.deepEqual(
@@ -221,7 +233,11 @@ export class Database extends BetterSqlite3Database {
         }
       );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         [
           {
             id: 1,
@@ -251,7 +267,11 @@ export class Database extends BetterSqlite3Database {
         });
       });
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         []
       );
       assert.deepEqual(
@@ -266,7 +286,11 @@ export class Database extends BetterSqlite3Database {
         }
       );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         [
           {
             id: 1,
@@ -296,7 +320,11 @@ export class Database extends BetterSqlite3Database {
         });
       });
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         []
       );
       assert.deepEqual(
@@ -311,7 +339,11 @@ export class Database extends BetterSqlite3Database {
         }
       );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         [
           {
             id: 1,
@@ -381,7 +413,11 @@ export class Database extends BetterSqlite3Database {
         );
       });
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         []
       );
       database.migrate(
@@ -399,7 +435,11 @@ export class Database extends BetterSqlite3Database {
         }
       );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `
+        ),
         [
           {
             id: 1,
@@ -470,18 +510,28 @@ export class Database extends BetterSqlite3Database {
         }
       );
       assert.deepEqual(
-        database.get<{ name: string }>(sql`SELECT "id", "name" FROM "users"`, {
-          safeIntegers: true,
-        }),
+        database.get<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `,
+          {
+            safeIntegers: true,
+          }
+        ),
         {
           id: 1n,
           name: "Leandro Facchinetti",
         }
       );
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`, {
-          safeIntegers: true,
-        }),
+        database.all<{ name: string }>(
+          sql`
+            SELECT "id", "name" FROM "users"
+          `,
+          {
+            safeIntegers: true,
+          }
+        ),
         [
           {
             id: 1n,
