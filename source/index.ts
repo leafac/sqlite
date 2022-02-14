@@ -62,9 +62,95 @@ export class Database extends BetterSqlite3Database {
   get<T>(query: Query, options: Options = {}): T | undefined {
     return this.getStatement(query.source, options).get(query.parameters);
   }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.deepEqual(
+        database.get<{ id: number; name: string }>(
+          sql`
+            INSERT INTO "users" ("name")
+            VALUES (${"Leandro Facchinetti"})
+            RETURNING *
+          `
+        ),
+        { id: 1, name: "Leandro Facchinetti" }
+      );
+
+      assert.deepEqual(
+        database.get<{ id: number; name: string }>(
+          sql`SELECT "id", "name" from "users"`
+        ),
+        {
+          id: 1,
+          name: "Leandro Facchinetti",
+        }
+      );
+      database.close();
+    }
+  }
 
   all<T>(query: Query, options: Options = {}): T[] {
     return this.getStatement(query.source, options).all(query.parameters);
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+      );
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`
+      );
+      database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT * from "users"`),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 2,
+            name: "Linda Renner",
+          },
+          {
+            id: 3,
+            name: "David Adler",
+          },
+        ]
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(
+          sql`SELECT * from "users" WHERE "name" IN ${[]}`
+        ),
+        []
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(
+          sql`SELECT * from "users" WHERE "name" IN ${[
+            "Leandro Facchinetti",
+            "David Adler",
+          ]}`
+        ),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 3,
+            name: "David Adler",
+          },
+        ]
+      );
+      database.close();
+    }
   }
 
   iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
