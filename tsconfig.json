@@ -3,7 +3,7 @@
     "rootDir": "./source/",
     "outDir": "./distribution/",
 
-    "module": "ES2020",
+    "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "target": "ES2020",
