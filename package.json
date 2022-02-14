@@ -17,6 +17,11 @@
   "license": "MIT",
   "bugs": "https://github.com/leafac/sqlite/issues",
   "homepage": "https://github.com/leafac/sqlite#readme",
+  "funding": [
+    "https://patreon.com/leafac",
+    "https://paypal.me/LeandroFacchinettiEU",
+    "https://github.com/sponsors/leafac"
+  ],
   "publishConfig": {
     "access": "public"
   },

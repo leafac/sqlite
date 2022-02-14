@@ -1,4 +1,40 @@
 <!--
+  - Use SQLite as queue:
+    - https://sqlite.org/forum/info/b047f5ef5b76edff
+    - https://github.com/StratoKit/strato-db/blob/master/src/EventQueue.js
+    - https://github.com/litements/litequeue
+    - https://www.npmjs.com/package/better-queue-sqlite
+
+
+
+Recommendations
+  1. database.pragma("journal_mode = WAL");
+
+  2. (Particularly important if you’re using the above, because otherwise the journal files aren’t resolved)
+
+    process.once("exit", () => {
+      database.close();
+    });
+    process.once("SIGHUP", () => {
+      process.exit(128 + 1);
+    });
+    process.once("SIGINT", () => {
+      process.exit(128 + 2);
+    });
+    process.once("SIGQUIT", () => {
+      process.exit(128 + 3);
+    });
+    process.once("SIGUSR2", () => {
+      process.exit(128 + 12);
+    });
+    process.once("SIGTERM", () => {
+      process.exit(128 + 15);
+    });
+    process.once("SIGBREAK", () => {
+      process.exit(128 + 21);
+    });
+
+
 - [ ] Return a dump of the final schema
     - [ ] https://github.com/leafac/sqlite-migration/issues/1
     - [ ] https://github.com/trevyn/turbosql/blob/2e46e42a78f929cb2492a87e7124ba49d01178ca/turbosql-impl/src/lib.rs#L281
