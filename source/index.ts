@@ -12,7 +12,7 @@ export interface Query {
 
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
 export class Database extends BetterSqlite3Database {
-  statements: Map<string, BetterSqlite3Database.Statement> = new Map();
+  #statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
   execute(query: Query): this {
     if (query.parameters.length > 0)
@@ -184,10 +184,10 @@ export class Database extends BetterSqlite3Database {
     source: string,
     options: Options = {}
   ): BetterSqlite3Database.Statement {
-    let statement = this.statements.get(source);
+    let statement = this.#statements.get(source);
     if (statement === undefined) {
       statement = this.prepare(source);
-      this.statements.set(source, statement);
+      this.#statements.set(source, statement);
     }
     if (typeof options.safeIntegers === "boolean")
       statement.safeIntegers(options.safeIntegers);
