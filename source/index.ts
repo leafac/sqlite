@@ -78,7 +78,6 @@ export class Database extends BetterSqlite3Database {
         ),
         { id: 1, name: "Leandro Facchinetti" }
       );
-
       assert.deepEqual(
         database.get<{ id: number; name: string }>(
           sql`SELECT "id", "name" FROM "users"`
@@ -192,13 +191,136 @@ export class Database extends BetterSqlite3Database {
   executeTransaction<T>(fn: () => T): T {
     return this.transaction(fn)();
   }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.throws(() => {
+        database.executeTransaction(() => {
+          database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+          throw new Error("Rollback");
+        });
+      });
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        []
+      );
+      assert.deepEqual(
+        database.executeTransaction(() => {
+          return database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+        }),
+        {
+          changes: 1,
+          lastInsertRowid: 1,
+        }
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+        ]
+      );
+      database.close();
+    }
+  }
 
   executeTransactionImmediate<T>(fn: () => T): T {
     return this.transaction(fn).immediate();
   }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.throws(() => {
+        database.executeTransactionImmediate(() => {
+          database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+          throw new Error("Rollback");
+        });
+      });
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        []
+      );
+      assert.deepEqual(
+        database.executeTransactionImmediate(() => {
+          return database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+        }),
+        {
+          changes: 1,
+          lastInsertRowid: 1,
+        }
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+        ]
+      );
+      database.close();
+    }
+  }
 
   executeTransactionExclusive<T>(fn: () => T): T {
     return this.transaction(fn).exclusive();
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      assert.throws(() => {
+        database.executeTransactionExclusive(() => {
+          database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+          throw new Error("Rollback");
+        });
+      });
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        []
+      );
+      assert.deepEqual(
+        database.executeTransactionExclusive(() => {
+          return database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+        }),
+        {
+          changes: 1,
+          lastInsertRowid: 1,
+        }
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+        ]
+      );
+      database.close();
+    }
   }
 
   migrate(...migrations: (Query | ((database: this) => void))[]): void {
@@ -210,6 +332,83 @@ export class Database extends BetterSqlite3Database {
         else this.execute(migration);
       this.pragma(`user_version = ${migrations.length}`);
     });
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      let counter = 0;
+      database.migrate(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+        () => {
+          counter++;
+        }
+      );
+      assert.equal(counter, 1);
+      database.migrate(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+        () => {
+          counter++;
+        }
+      );
+      assert.equal(counter, 1);
+      database.migrate(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+        () => {
+          counter++;
+        },
+        () => {
+          counter++;
+        }
+      );
+      assert.equal(counter, 2);
+      assert.throws(() => {
+        database.migrate(
+          sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+          () => {
+            counter++;
+          },
+          () => {
+            counter++;
+          },
+          (database) => {
+            database.run(
+              sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+            );
+          },
+          () => {
+            throw new Error("Should rollback");
+          }
+        );
+      });
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        []
+      );
+      database.migrate(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+        () => {
+          counter++;
+        },
+        () => {
+          counter++;
+        },
+        (database) => {
+          database.run(
+            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+          );
+        }
+      );
+      assert.deepEqual(
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+        ]
+      );
+      database.close();
+    }
   }
 
   getStatement(
