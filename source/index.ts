@@ -81,7 +81,7 @@ export class Database extends BetterSqlite3Database {
 
       assert.deepEqual(
         database.get<{ id: number; name: string }>(
-          sql`SELECT "id", "name" from "users"`
+          sql`SELECT "id", "name" FROM "users"`
         ),
         {
           id: 1,
@@ -109,7 +109,7 @@ export class Database extends BetterSqlite3Database {
       );
       database.run(sql`INSERT INTO "users" ("name") VALUES (${"David Adler"})`);
       assert.deepEqual(
-        database.all<{ name: string }>(sql`SELECT * from "users"`),
+        database.all<{ name: string }>(sql`SELECT "id", "name" FROM "users"`),
         [
           {
             id: 1,
@@ -127,13 +127,13 @@ export class Database extends BetterSqlite3Database {
       );
       assert.deepEqual(
         database.all<{ name: string }>(
-          sql`SELECT * from "users" WHERE "name" IN ${[]}`
+          sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}`
         ),
         []
       );
       assert.deepEqual(
         database.all<{ name: string }>(
-          sql`SELECT * from "users" WHERE "name" IN ${[
+          sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[
             "Leandro Facchinetti",
             "David Adler",
           ]}`
@@ -155,6 +155,38 @@ export class Database extends BetterSqlite3Database {
 
   iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
     return this.getStatement(query.source, options).iterate(query.parameters);
+  }
+  static {
+    if (process.env.TEST === "leafac--sqlite") {
+      const database = new Database(":memory:");
+      database.execute(
+        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+      );
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+      );
+      database.run(
+        sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`
+      );
+      assert.deepEqual(
+        [
+          ...database.iterate<{ name: string }>(
+            sql`SELECT "id", "name" FROM "users"`
+          ),
+        ],
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 2,
+            name: "Linda Renner",
+          },
+        ]
+      );
+      database.close();
+    }
   }
 
   executeTransaction<T>(fn: () => T): T {
@@ -254,33 +286,33 @@ if (process.env.TEST === "leafac--sqlite") {
   );
   assert.deepEqual(
     sql`
-      SELECT * from "users" WHERE "name" IN ${[]}
+      SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}
     `,
     {
       parameters: [],
       source: `
-      SELECT * from "users" WHERE "name" IN ()
+      SELECT "id", "name" FROM "users" WHERE "name" IN ()
     `,
     }
   );
   assert.deepEqual(
-    sql`SELECT * from "users" WHERE "name" IN ${[
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[
       "Leandro Facchinetti",
       "David Adler",
     ]}`,
     {
       parameters: ["Leandro Facchinetti", "David Adler"],
-      source: `SELECT * from "users" WHERE "name" IN (?,?)`,
+      source: `SELECT "id", "name" FROM "users" WHERE "name" IN (?,?)`,
     }
   );
   assert.deepEqual(
-    sql`SELECT * FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${30}`}`,
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${30}`}`,
     {
       parameters: ["Leandro Facchinetti", 30],
-      source: `SELECT * FROM "users" WHERE name = ? AND "age" = ?`,
+      source: `SELECT "id", "name" FROM "users" WHERE name = ? AND "age" = ?`,
     }
   );
   assert.throws(() => {
-    sql`SELECT * FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${30}`}`;
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${30}`}`;
   });
 }
