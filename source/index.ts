@@ -1,55 +1,13 @@
 import BetterSqlite3Database from "better-sqlite3";
+import assert from "node:assert/strict";
+
+export interface Options {
+  safeIntegers?: boolean;
+}
 
 export interface Query {
   source: string;
   parameters: any[];
-}
-
-export function sql(
-  template: TemplateStringsArray,
-  ...substitutions: any[]
-): Query {
-  const sourceParts: string[] = [];
-  const parameters: any[] = [];
-
-  for (
-    let templateIndex = 0;
-    templateIndex < template.length - 1;
-    templateIndex++
-  ) {
-    const templatePart = template[templateIndex];
-    const parameter = substitutions[templateIndex];
-
-    if (templatePart.endsWith("$")) {
-      if (
-        typeof parameter.source !== "string" ||
-        !Array.isArray(parameter.parameters)
-      )
-        throw new Error(
-          `Failed to interpolate raw query ‘${parameter}’ because it wasn’t created with the sql tagged template literal`
-        );
-      sourceParts.push(templatePart.slice(0, -1), parameter.source);
-      parameters.push(...parameter.parameters);
-    } else if (Array.isArray(parameter)) {
-      sourceParts.push(
-        templatePart,
-        "(",
-        parameter.map(() => "?").join(","),
-        ")"
-      );
-      parameters.push(...parameter);
-    } else {
-      sourceParts.push(templatePart, "?");
-      parameters.push(parameter);
-    }
-  }
-  sourceParts.push(template[template.length - 1]);
-
-  return { source: sourceParts.join(""), parameters };
-}
-
-export interface Options {
-  safeIntegers?: boolean;
 }
 
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
@@ -120,4 +78,94 @@ export class Database extends BetterSqlite3Database {
       statement.safeIntegers(options.safeIntegers);
     return statement;
   }
+}
+
+export function sql(
+  template: TemplateStringsArray,
+  ...substitutions: any[]
+): Query {
+  const sourceParts: string[] = [];
+  const parameters: any[] = [];
+
+  for (
+    let templateIndex = 0;
+    templateIndex < template.length - 1;
+    templateIndex++
+  ) {
+    const templatePart = template[templateIndex];
+    const parameter = substitutions[templateIndex];
+
+    if (templatePart.endsWith("$")) {
+      if (
+        typeof parameter.source !== "string" ||
+        !Array.isArray(parameter.parameters)
+      )
+        throw new Error(
+          `Failed to interpolate raw query ‘${parameter}’ because it wasn’t created with the sql tagged template literal`
+        );
+      sourceParts.push(templatePart.slice(0, -1), parameter.source);
+      parameters.push(...parameter.parameters);
+    } else if (Array.isArray(parameter)) {
+      sourceParts.push(
+        templatePart,
+        "(",
+        parameter.map(() => "?").join(","),
+        ")"
+      );
+      parameters.push(...parameter);
+    } else {
+      sourceParts.push(templatePart, "?");
+      parameters.push(parameter);
+    }
+  }
+  sourceParts.push(template[template.length - 1]);
+
+  return { source: sourceParts.join(""), parameters };
+}
+if (process.env.TEST === "leafac--sqlite") {
+  assert.deepEqual(
+    sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
+    {
+      parameters: [],
+      source: `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
+    }
+  );
+  assert.deepEqual(
+    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`,
+    {
+      parameters: ["Leandro Facchinetti"],
+      source: `INSERT INTO "users" ("name") VALUES (?)`,
+    }
+  );
+  assert.deepEqual(
+    sql`
+      SELECT * from "users" WHERE "name" IN ${[]}
+    `,
+    {
+      parameters: [],
+      source: `
+      SELECT * from "users" WHERE "name" IN ()
+    `,
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT * from "users" WHERE "name" IN ${[
+      "Leandro Facchinetti",
+      "David Adler",
+    ]}`,
+    {
+      parameters: ["Leandro Facchinetti", "David Adler"],
+      source: `SELECT * from "users" WHERE "name" IN (?,?)`,
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT * FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${30}`}`,
+    {
+      parameters: ["Leandro Facchinetti", 30],
+      source: `SELECT * FROM "users" WHERE name = ? AND "age" = ?`,
+    }
+  );
+  assert.throws(() => {
+    sql`SELECT * FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${30}`}`;
+  });
 }
