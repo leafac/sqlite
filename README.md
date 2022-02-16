@@ -1,9 +1,12 @@
 <!--
   - Use SQLite as queue:
+    - https://github.com/collectiveidea/delayed_job/tree/11e0212fb112c5e11e4555ef1e24510819a66347#gory-details
     - https://sqlite.org/forum/info/b047f5ef5b76edff
     - https://github.com/StratoKit/strato-db/blob/master/src/EventQueue.js
     - https://github.com/litements/litequeue
     - https://www.npmjs.com/package/better-queue-sqlite
+    - https://github.com/bensheldon/good_job
+    - https://github.com/betterment/delayed
 
 
 
