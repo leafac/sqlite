@@ -11,6 +11,8 @@ export interface Query {
 }
 
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
+// FIXME: In BetterSqlite3Database types, make ‘filename’ optional, in which case a temporary database is created (see https://www.sqlite.org/inmemorydb.html § Temporary Databases)
+// FIXME: In BetterSqlite3Database types, make BindParameters more specific than ‘any’
 export class Database extends BetterSqlite3Database {
   #statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
