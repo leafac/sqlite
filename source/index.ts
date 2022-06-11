@@ -6,7 +6,7 @@ export interface Options {
 }
 
 export interface Query {
-  source: string;
+  sourceParts: string[];
   parameters: any[];
 }
 
@@ -17,33 +17,41 @@ export class Database extends BetterSqlite3Database {
   #statements: Map<string, BetterSqlite3Database.Statement> = new Map();
 
   execute(query: Query): this {
-    if (query.parameters.length > 0)
-      throw new Error(
-        `Failed to execute(${JSON.stringify(
-          query,
-          undefined,
-          2
-        )}) because execute() doesn’t support queries with parameters`
-      );
-    return this.exec(query.source);
+    let source = "";
+    for (
+      let parametersIndex = 0;
+      parametersIndex < query.parameters.length;
+      parametersIndex++
+    )
+      source +=
+        query.sourceParts[parametersIndex] +
+        this.get<{ parameter: string }>(
+          sql`
+            SELECT quote(${query.parameters[parametersIndex]}) AS "parameter"
+          `
+        )!.parameter;
+    source += query.sourceParts[query.sourceParts.length - 1];
+    return this.exec(source);
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
       database.execute(
-        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
+        sql`
+          CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);
+          INSERT INTO "users" ("name") VALUES (${"Eliot Smith"});
+        `
       );
-      assert.throws(() => {
-        database.execute(
-          sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-        );
-      });
+      assert.equal(
+        database.get<{ name: string }>(sql`SELECT * FROM "users"`)!.name,
+        "Eliot Smith"
+      );
       database.close();
     }
   }
 
   run(query: Query, options: Options = {}): BetterSqlite3Database.RunResult {
-    return this.getStatement(query.source, options).run(query.parameters);
+    return this.getStatement(query, options).run(query.parameters);
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
@@ -62,7 +70,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   get<T>(query: Query, options: Options = {}): T | undefined {
-    return this.getStatement(query.source, options).get(query.parameters);
+    return this.getStatement(query, options).get(query.parameters);
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
@@ -94,7 +102,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   all<T>(query: Query, options: Options = {}): T[] {
-    return this.getStatement(query.source, options).all(query.parameters);
+    return this.getStatement(query, options).all(query.parameters);
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
@@ -163,7 +171,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
-    return this.getStatement(query.source, options).iterate(query.parameters);
+    return this.getStatement(query, options).iterate(query.parameters);
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
@@ -454,9 +462,10 @@ export class Database extends BetterSqlite3Database {
   }
 
   getStatement(
-    source: string,
+    query: Query,
     options: Options = {}
   ): BetterSqlite3Database.Statement {
+    const source = query.sourceParts.join("?");
     let statement = this.#statements.get(source);
     if (statement === undefined) {
       statement = this.prepare(source);
@@ -466,7 +475,6 @@ export class Database extends BetterSqlite3Database {
       statement.safeIntegers(options.safeIntegers);
     return statement;
   }
-
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -590,68 +598,82 @@ export function sql(
   template: TemplateStringsArray,
   ...substitutions: any[]
 ): Query {
+  const templateParts = [...template];
   const sourceParts: string[] = [];
   const parameters: any[] = [];
-
   for (
-    let templateIndex = 0;
-    templateIndex < template.length - 1;
-    templateIndex++
+    let substitutionsIndex = 0;
+    substitutionsIndex < substitutions.length;
+    substitutionsIndex++
   ) {
-    const templatePart = template[templateIndex];
-    const parameter = substitutions[templateIndex];
-
+    let templatePart = templateParts[substitutionsIndex];
+    const substitution = substitutions[substitutionsIndex];
     if (templatePart.endsWith("$")) {
+      templatePart = templatePart.slice(0, -1);
       if (
-        typeof parameter.source !== "string" ||
-        !Array.isArray(parameter.parameters)
+        !Array.isArray(substitution.sourceParts) ||
+        substitution.sourceParts.some(
+          (substitutionPart: any) => typeof substitutionPart !== "string"
+        ) ||
+        !Array.isArray(substitution.parameters)
       )
         throw new Error(
-          `Failed to interpolate raw query ‘${parameter}’ because it wasn’t created with the sql tagged template literal`
+          `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template literal`
         );
-      sourceParts.push(templatePart.slice(0, -1), parameter.source);
-      parameters.push(...parameter.parameters);
-    } else if (Array.isArray(parameter)) {
+      const substitutionQuery = substitution as Query;
       sourceParts.push(
-        templatePart,
-        "(",
-        parameter.map(() => "?").join(","),
-        ")"
+        `${templatePart}${substitutionQuery.sourceParts[0]}`,
+        ...substitutionQuery.sourceParts.slice(1, -1)
       );
-      parameters.push(...parameter);
+      templateParts[substitutionsIndex + 1] = `${
+        substitutionQuery.sourceParts[substitutionQuery.sourceParts.length - 1]
+      }${templateParts[substitutionsIndex + 1]}`;
+      parameters.push(...substitutionQuery.parameters);
+    } else if (Array.isArray(substitution)) {
+      if (substitution.length === 0)
+        templateParts[substitutionsIndex + 1] = `${templatePart}()${
+          templateParts[substitutionsIndex + 1]
+        }`;
+      else {
+        sourceParts.push(
+          `${templatePart}(`,
+          ...new Array(substitution.length - 1).fill(",")
+        );
+        templateParts[substitutionsIndex + 1] = `)${
+          templateParts[substitutionsIndex + 1]
+        }`;
+        parameters.push(...substitution);
+      }
     } else {
-      sourceParts.push(templatePart, "?");
-      parameters.push(parameter);
+      sourceParts.push(templatePart);
+      parameters.push(substitution);
     }
   }
-  sourceParts.push(template[template.length - 1]);
-
-  return { source: sourceParts.join(""), parameters };
+  sourceParts.push(templateParts[templateParts.length - 1]);
+  return { sourceParts, parameters };
 }
 if (process.env.TEST === "leafac--sqlite") {
   assert.deepEqual(
     sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
     {
+      sourceParts: [
+        `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
+      ],
       parameters: [],
-      source: `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
     }
   );
   assert.deepEqual(
     sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`,
     {
+      sourceParts: [`INSERT INTO "users" ("name") VALUES (`, `)`],
       parameters: ["Leandro Facchinetti"],
-      source: `INSERT INTO "users" ("name") VALUES (?)`,
     }
   );
   assert.deepEqual(
-    sql`
-      SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}
-    `,
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}`,
     {
+      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
       parameters: [],
-      source: `
-      SELECT "id", "name" FROM "users" WHERE "name" IN ()
-    `,
     }
   );
   assert.deepEqual(
@@ -660,18 +682,26 @@ if (process.env.TEST === "leafac--sqlite") {
       "David Adler",
     ]}`,
     {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
+        `,`,
+        `)`,
+      ],
       parameters: ["Leandro Facchinetti", "David Adler"],
-      source: `SELECT "id", "name" FROM "users" WHERE "name" IN (?,?)`,
     }
   );
   assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${30}`}`,
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${31}`}`,
     {
-      parameters: ["Leandro Facchinetti", 30],
-      source: `SELECT "id", "name" FROM "users" WHERE name = ? AND "age" = ?`,
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE name = `,
+        ` AND "age" = `,
+        ``,
+      ],
+      parameters: ["Leandro Facchinetti", 31],
     }
   );
   assert.throws(() => {
-    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${30}`}`;
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${31}`}`;
   });
 }

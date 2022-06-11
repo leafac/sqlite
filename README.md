@@ -224,14 +224,6 @@ The `Database` class introduces the following new methods:
 
 - `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal.
 
-  You must not interpolate any parameters into queries passed to `.execute()`; for example, the following throws an error:
-
-  ```typescript
-  database.execute(
-    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-  ); // => Throws an error
-  ```
-
 - `.executeTransaction<T>(fn)`, `.executeTransactionImmediate<T>(fn)`, and `.executeTransactionExclusive<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction()`, `.transaction().immediate()`, and `.transaction().exclusive()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function), but execute the transaction immediately (see [§ Convenience Methods for Transactions](#convenience-methods-for-transactions)).
 
 ### How It Works
@@ -257,7 +249,7 @@ The `Database` keeps a map from query sources to better-sqlite3 prepared stateme
 
 There’s no cache eviction policy in @leafac/sqlite. The prepared statements for every query ever run hang around in memory for as long as the database object is alive (the statements aren’t eligible for garbage collection because they’re in the map). In most cases, that’s fine because there are only a limited number of queries; it’s the parameters that change. If that becomes a problem for you, you may access the cache under the `statements` property and implement your own cache eviction policy.
 
-You may also use the low-level `.getStatement(source: string, options: Options)` method to get a hold of the underlying prepared statement in the cache (for example, to use [`.pluck()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#plucktogglestate---this), [`.expand()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#expandtogglestate---this), [`.raw()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#rawtogglestate---this), [`.columns()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#columns---array-of-objects), and [`.bind()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#bindbindparameters---this)—though `.bind()` will probably render the prepared statement unusable by @leafac/sqlite).
+You may also use the low-level `.getStatement(query: Query, options: Options)` method to get a hold of the underlying prepared statement in the cache (for example, to use [`.pluck()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#plucktogglestate---this), [`.expand()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#expandtogglestate---this), [`.raw()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#rawtogglestate---this), [`.columns()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#columns---array-of-objects), and [`.bind()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#bindbindparameters---this)—though `.bind()` will probably render the prepared statement unusable by @leafac/sqlite).
 
 #### Migration System
 
@@ -278,7 +270,19 @@ You may also use the low-level `.getStatement(source: string, options: Options)`
 
 ### Changelog
 
+#### 3.0.0
+
+- Added support for interpolation of parameters into queries passed to `.execute()`, for example:
+
+  ```typescript
+  database.execute(
+    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+  );
+  ```
+
+  This required a change to the `Query` data type, hence the major version bump, but most people don’t need any extra work to upgrade.
+
 #### 2.0.0
 
 - [ESM-only](https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c).
-- Add support for the `IN` operator (https://github.com/leafac/sqlite/pull/2, thanks @mfbx9da4).
+- Added support for the `IN` operator (https://github.com/leafac/sqlite/pull/2, thanks @mfbx9da4).
