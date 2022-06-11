@@ -1,6 +1,6 @@
 {
   "name": "@leafac/sqlite",
-  "version": "2.0.5",
+  "version": "3.0.0",
   "description": "Radically Straightforward SQLite",
   "exports": "./distribution/index.js",
   "types": "./distribution/index.d.ts",
