@@ -612,23 +612,33 @@ export function sql(
       templatePart = templatePart.slice(0, -1);
       if (
         !Array.isArray(substitution.sourceParts) ||
+        substitution.sourceParts.length === 0 ||
         substitution.sourceParts.some(
           (substitutionPart: any) => typeof substitutionPart !== "string"
         ) ||
-        !Array.isArray(substitution.parameters)
+        !Array.isArray(substitution.parameters) ||
+        substitution.sourceParts.length !== substitution.parameters.length + 1
       )
         throw new Error(
           `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template literal`
         );
       const substitutionQuery = substitution as Query;
-      sourceParts.push(
-        `${templatePart}${substitutionQuery.sourceParts[0]}`,
-        ...substitutionQuery.sourceParts.slice(1, -1)
-      );
-      templateParts[substitutionsIndex + 1] = `${
-        substitutionQuery.sourceParts[substitutionQuery.sourceParts.length - 1]
-      }${templateParts[substitutionsIndex + 1]}`;
-      parameters.push(...substitutionQuery.parameters);
+      if (substitutionQuery.sourceParts.length === 1)
+        templateParts[substitutionsIndex + 1] = `${templatePart}${
+          substitutionQuery.sourceParts[0]
+        }${templateParts[substitutionsIndex + 1]}`;
+      else {
+        sourceParts.push(
+          `${templatePart}${substitutionQuery.sourceParts[0]}`,
+          ...substitutionQuery.sourceParts.slice(1, -1)
+        );
+        templateParts[substitutionsIndex + 1] = `${
+          substitutionQuery.sourceParts[
+            substitutionQuery.sourceParts.length - 1
+          ]
+        }${templateParts[substitutionsIndex + 1]}`;
+        parameters.push(...substitutionQuery.parameters);
+      }
     } else if (Array.isArray(substitution)) {
       if (substitution.length === 0)
         templateParts[substitutionsIndex + 1] = `${templatePart}()${
@@ -688,6 +698,16 @@ if (process.env.TEST === "leafac--sqlite") {
         `)`,
       ],
       parameters: ["Leandro Facchinetti", "David Adler"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" IS NOT NULL`}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE name = `,
+        ` AND "age" IS NOT NULL`,
+      ],
+      parameters: ["Leandro Facchinetti"],
     }
   );
   assert.deepEqual(
