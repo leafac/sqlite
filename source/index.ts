@@ -365,15 +365,26 @@ export class Database extends BetterSqlite3Database {
     }
   }
 
+  // https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes
   migrate(...migrations: (Query | ((database: this) => void))[]): void {
-    this.executeTransaction(() => {
-      for (const migration of migrations.slice(
-        this.pragma("user_version", { simple: true })
-      ))
-        if (typeof migration === "function") migration(this);
-        else this.execute(migration);
-      this.pragma(`user_version = ${migrations.length}`);
-    });
+    const foreignKeys = this.pragma("foreign_keys", { simple: true }) === 1;
+    if (foreignKeys) this.pragma("foreign_keys = OFF");
+    try {
+      for (
+        let migrationIndex = this.pragma("user_version", { simple: true });
+        migrationIndex < migrations.length;
+        migrationIndex++
+      )
+        this.executeTransaction(() => {
+          const migration = migrations[migrationIndex];
+          if (typeof migration === "function") migration(this);
+          else this.execute(migration);
+          if (foreignKeys) this.pragma("foreign_key_check");
+          this.pragma(`user_version = ${migrationIndex + 1}`);
+        });
+    } finally {
+      if (foreignKeys) this.pragma("foreign_keys = ON");
+    }
   }
   static {
     if (process.env.TEST === "leafac--sqlite") {
