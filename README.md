@@ -270,6 +270,10 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
+#### 3.1.0
+
+- Changed `.migrate()` to conform to <https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes>.
+
 #### 3.0.0
 
 - Added support for interpolation of parameters into queries passed to `.execute()`, for example:
