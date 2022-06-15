@@ -429,7 +429,9 @@ export class Database extends BetterSqlite3Database {
             );
           },
           () => {
-            throw new Error("Should rollback");
+            throw new Error(
+              "The previous migration should succeed, but this migration should fail"
+            );
           }
         );
       });
@@ -439,34 +441,7 @@ export class Database extends BetterSqlite3Database {
             SELECT "id", "name" FROM "users"
           `
         ),
-        []
-      );
-      database.migrate(
-        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
-        () => {
-          counter++;
-        },
-        () => {
-          counter++;
-        },
-        (database) => {
-          database.run(
-            sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-          );
-        }
-      );
-      assert.deepEqual(
-        database.all<{ name: string }>(
-          sql`
-            SELECT "id", "name" FROM "users"
-          `
-        ),
-        [
-          {
-            id: 1,
-            name: "Leandro Facchinetti",
-          },
-        ]
+        [{ id: 1, name: "Leandro Facchinetti" }]
       );
       database.close();
     }
