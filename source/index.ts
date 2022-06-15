@@ -379,7 +379,17 @@ export class Database extends BetterSqlite3Database {
           const migration = migrations[migrationIndex];
           if (typeof migration === "function") migration(this);
           else this.execute(migration);
-          if (foreignKeys) this.pragma("foreign_key_check");
+          if (foreignKeys) {
+            const foreignKeyViolations = this.pragma("foreign_key_check");
+            if (foreignKeyViolations.length !== 0)
+              throw new Error(
+                `Foreign key violations in migration:\n${JSON.stringify(
+                  foreignKeyViolations,
+                  undefined,
+                  2
+                )}`
+              );
+          }
           this.pragma(`user_version = ${migrationIndex + 1}`);
         });
     } finally {
@@ -443,6 +453,39 @@ export class Database extends BetterSqlite3Database {
         ),
         [{ id: 1, name: "Leandro Facchinetti" }]
       );
+      assert(database.pragma("foreign_keys", { simple: true }) === 1);
+      assert.throws(() => {
+        database.migrate(
+          sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+          () => {
+            counter++;
+          },
+          () => {
+            counter++;
+          },
+          (database) => {
+            database.run(
+              sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+            );
+          },
+          sql`
+            CREATE TABLE "posts" (
+              "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+              "title" TEXT,
+              "content" TEXT,
+              "author" REFERENCES "users" ("id") ON DELETE SET NULL
+            );
+          `,
+          sql`
+            INSERT INTO "posts" ("title", "content", "author")
+            VALUES (
+              'The Non-Existing Author Should Cause the Migration to Fail',
+              'We turn off foreign keys so that migrations can alter the schema of existing tables, but we check foreign keys before we complete the migration.',
+              999999
+            );
+          `
+        );
+      });
       database.close();
     }
   }
