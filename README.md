@@ -69,6 +69,8 @@ Migrations:
   - Views: If they still apply, they may be preserved, but if they need adaptations they may be dropped and recreated.
   - Foreign keys from other tables pointing at the affected table must be preserved (you don’t want to recreate the whole database, right?)
   - FTS virtual tables with the `content` field behave like foreign keys with in this context, so they may be preserved. (Even though in common database use (`INSERT`s, `SELECT`s, and so forth) FTS virtual tables behave like indices.)
+
+One more reasons to not have “down” migrations: The database schema can’t drift apart from the application code!
 -->
 
 <h1 align="center">@leafac/sqlite</h1>
