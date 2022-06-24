@@ -294,6 +294,14 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
+#### 3.2.0
+
+- Added support for asynchronous migration functions in `.migrate()`. Asynchronous migrations can be useful, for example, if need to ask the user for some input to add initial data to new columns in existing tables.
+
+  **Note:** Now `.migrate()` itself is asynchronous, remember to `await` on it.
+
+  **Technical Sidenote:** Migration functions run in a transaction, and generally speaking [transactions shouldn’t persist across ticks of the event loop](https://github.com/WiseLibs/better-sqlite3/blob/f52b3b00cf03090619787a20fb263fec553593ff/docs/api.md#transactionfunction---function), but migrations are a special case: They run at most once, and typically at the application startup, while it’s the only transaction.
+
 #### 3.1.0
 
 - Changed `.migrate()` to conform to <https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes>.
