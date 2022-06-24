@@ -366,7 +366,9 @@ export class Database extends BetterSqlite3Database {
   }
 
   // https://www.sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes
-  migrate(...migrations: (Query | ((database: this) => void))[]): void {
+  async migrate(
+    ...migrations: (Query | ((database: this) => void | Promise<void>))[]
+  ): Promise<void> {
     const foreignKeys = this.pragma("foreign_keys", { simple: true }) === 1;
     if (foreignKeys) this.pragma("foreign_keys = OFF");
     try {
@@ -375,9 +377,14 @@ export class Database extends BetterSqlite3Database {
         migrationIndex < migrations.length;
         migrationIndex++
       )
-        this.executeTransaction(() => {
+        try {
+          this.execute(
+            sql`
+              BEGIN;
+            `
+          );
           const migration = migrations[migrationIndex];
-          if (typeof migration === "function") migration(this);
+          if (typeof migration === "function") await migration(this);
           else this.execute(migration);
           if (foreignKeys) {
             const foreignKeyViolations = this.pragma("foreign_key_check");
@@ -391,103 +398,160 @@ export class Database extends BetterSqlite3Database {
               );
           }
           this.pragma(`user_version = ${migrationIndex + 1}`);
-        });
+          this.execute(
+            sql`
+              COMMIT;
+            `
+          );
+        } catch (error) {
+          this.execute(
+            sql`
+              ROLLBACK;
+            `
+          );
+          throw error;
+        }
     } finally {
       if (foreignKeys) this.pragma("foreign_keys = ON");
     }
   }
   static {
-    if (process.env.TEST === "leafac--sqlite") {
-      const database = new Database(":memory:");
-      let counter = 0;
-      database.migrate(
-        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
-        () => {
-          counter++;
-        }
-      );
-      assert.equal(counter, 1);
-      database.migrate(
-        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
-        () => {
-          counter++;
-        }
-      );
-      assert.equal(counter, 1);
-      database.migrate(
-        sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
-        () => {
-          counter++;
-        },
-        () => {
-          counter++;
-        }
-      );
-      assert.equal(counter, 2);
-      assert.throws(() => {
-        database.migrate(
+    if (process.env.TEST === "leafac--sqlite")
+      (async () => {
+        const database = new Database(":memory:");
+        let counter = 0;
+        await database.migrate(
           sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
           () => {
             counter++;
-          },
-          () => {
-            counter++;
-          },
-          (database) => {
-            database.run(
-              sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-            );
-          },
-          () => {
-            throw new Error(
-              "The previous migration should succeed, but this migration should fail"
-            );
           }
         );
-      });
-      assert.deepEqual(
-        database.all<{ name: string }>(
-          sql`
-            SELECT "id", "name" FROM "users"
-          `
-        ),
-        [{ id: 1, name: "Leandro Facchinetti" }]
-      );
-      assert(database.pragma("foreign_keys", { simple: true }) === 1);
-      assert.throws(() => {
-        database.migrate(
+        assert.equal(counter, 1);
+        await database.migrate(
+          sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+          () => {
+            counter++;
+          }
+        );
+        assert.equal(counter, 1);
+        await database.migrate(
           sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
           () => {
             counter++;
           },
           () => {
             counter++;
-          },
-          (database) => {
-            database.run(
-              sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
-            );
-          },
-          sql`
-            CREATE TABLE "posts" (
-              "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-              "title" TEXT,
-              "content" TEXT,
-              "author" REFERENCES "users" ("id") ON DELETE SET NULL
-            );
-          `,
-          sql`
-            INSERT INTO "posts" ("title", "content", "author")
-            VALUES (
-              'The Non-Existing Author Should Cause the Migration to Fail',
-              'We turn off foreign keys so that migrations can alter the schema of existing tables, but we check foreign keys before we complete the migration.',
-              999999
-            );
-          `
+          }
         );
-      });
-      database.close();
-    }
+        assert.equal(counter, 2);
+        await assert.rejects(async () => {
+          await database.migrate(
+            sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+            () => {
+              counter++;
+            },
+            () => {
+              counter++;
+            },
+            (database) => {
+              database.run(
+                sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+              );
+            },
+            () => {
+              throw new Error(
+                "The previous migration should succeed, but this migration should fail"
+              );
+            }
+          );
+        });
+        assert.deepEqual(
+          database.all<{ name: string }>(
+            sql`
+              SELECT "id", "name" FROM "users"
+            `
+          ),
+          [{ id: 1, name: "Leandro Facchinetti" }]
+        );
+        assert(database.pragma("foreign_keys", { simple: true }) === 1);
+        await assert.rejects(async () => {
+          await database.migrate(
+            sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+            () => {
+              counter++;
+            },
+            () => {
+              counter++;
+            },
+            (database) => {
+              database.run(
+                sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+              );
+            },
+            sql`
+              CREATE TABLE "posts" (
+                "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+                "title" TEXT,
+                "content" TEXT,
+                "author" REFERENCES "users" ("id") ON DELETE SET NULL
+              );
+            `,
+            sql`
+              INSERT INTO "posts" ("title", "content", "author")
+              VALUES (
+                'The Non-Existing Author Should Cause the Migration to Fail',
+                'We turn off foreign keys so that migrations can alter the schema of existing tables, but we check foreign keys before we complete the migration.',
+                999999
+              );
+            `
+          );
+        });
+        await assert.rejects(async () => {
+          await database.migrate(
+            sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`,
+            () => {
+              counter++;
+            },
+            () => {
+              counter++;
+            },
+            (database) => {
+              database.run(
+                sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`
+              );
+            },
+            sql`
+              CREATE TABLE "posts" (
+                "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+                "title" TEXT,
+                "content" TEXT,
+                "author" REFERENCES "users" ("id") ON DELETE SET NULL
+              );
+            `,
+            async (database) => {
+              database.execute(
+                sql`INSERT INTO "users" ("name") VALUES (${"Linda Renner"})`
+              );
+              await Promise.resolve();
+              throw new Error("Should rollback across ticks of the event loop");
+            }
+          );
+        });
+        assert.deepEqual(
+          database.all<{ name: string }>(
+            sql`
+              SELECT "id", "name" FROM "users"
+            `
+          ),
+          [
+            {
+              id: 1,
+              name: "Leandro Facchinetti",
+            },
+          ]
+        );
+        database.close();
+      })();
   }
 
   getStatement(
