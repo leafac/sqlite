@@ -296,6 +296,10 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
+#### 3.2.1
+
+- Added support for JavaScript `Set`s in queries—they behave like arrays.
+
 #### 3.2.0
 
 - Added support for asynchronous migration functions in `.migrate()`. Asynchronous migrations can be useful, for example, if need to ask the user for some input to add initial data to new columns in existing tables.

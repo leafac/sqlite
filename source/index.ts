@@ -166,6 +166,24 @@ export class Database extends BetterSqlite3Database {
           },
         ]
       );
+      assert.deepEqual(
+        database.all<{ name: string }>(
+          sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([
+            "Leandro Facchinetti",
+            "David Adler",
+          ])}`
+        ),
+        [
+          {
+            id: 1,
+            name: "Leandro Facchinetti",
+          },
+          {
+            id: 3,
+            name: "David Adler",
+          },
+        ]
+      );
       database.close();
     }
   }
@@ -700,7 +718,8 @@ export function sql(
     substitutionsIndex++
   ) {
     let templatePart = templateParts[substitutionsIndex];
-    const substitution = substitutions[substitutionsIndex];
+    let substitution = substitutions[substitutionsIndex];
+    if (substitution instanceof Set) substitution = [...substitution];
     if (templatePart.endsWith("$")) {
       templatePart = templatePart.slice(0, -1);
       if (
@@ -784,6 +803,27 @@ if (process.env.TEST === "leafac--sqlite") {
       "Leandro Facchinetti",
       "David Adler",
     ]}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
+        `,`,
+        `)`,
+      ],
+      parameters: ["Leandro Facchinetti", "David Adler"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([])}`,
+    {
+      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
+      parameters: [],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([
+      "Leandro Facchinetti",
+      "David Adler",
+    ])}`,
     {
       sourceParts: [
         `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
