@@ -71,6 +71,8 @@ Migrations:
   - FTS virtual tables with the `content` field behave like foreign keys with in this context, so they may be preserved. (Even though in common database use (`INSERT`s, `SELECT`s, and so forth) FTS virtual tables behave like indices.)
 
 One more reasons to not have “down” migrations: The database schema can’t drift apart from the application code!
+
+Change API of `executeTransaction()` to use options passed as arguments instead of multiple different method names.
 -->
 
 <h1 align="center">@leafac/sqlite</h1>
