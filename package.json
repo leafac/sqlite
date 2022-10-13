@@ -16,7 +16,7 @@
   "author": "Leandro Facchinetti <sqlite@leafac.com> (https://leafac.com)",
   "license": "MIT",
   "bugs": "https://github.com/leafac/sqlite/issues",
-  "homepage": "https://github.com/leafac/sqlite#readme",
+  "homepage": "https://github.com/leafac/sqlite",
   "funding": [
     "https://patreon.com/leafac",
     "https://paypal.me/LeandroFacchinettiEU",

@@ -4,10 +4,11 @@
     "outDir": "./distribution/",
 
     "module": "ESNext",
-    "moduleResolution": "node",
-    "lib": ["ES2021", "DOM", "DOM.Iterable"],
-    "target": "ES2020",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "target": "ESNext",
 
     "declaration": true,
     "declarationMap": true,
