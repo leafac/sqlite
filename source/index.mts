@@ -1,5 +1,5 @@
-import BetterSqlite3Database from "better-sqlite3";
 import assert from "node:assert/strict";
+import BetterSqlite3Database from "better-sqlite3";
 
 export interface Options {
   safeIntegers?: boolean;

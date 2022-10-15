@@ -2,9 +2,6 @@
   "name": "@leafac/sqlite",
   "version": "3.2.1",
   "description": "Radically Straightforward SQLite",
-  "exports": "./distribution/index.js",
-  "types": "./distribution/index.d.ts",
-  "repository": "leafac/sqlite",
   "keywords": [
     "sqlite",
     "sqlite3",
@@ -13,32 +10,34 @@
     "template strings",
     "better-sqlite3"
   ],
-  "author": "Leandro Facchinetti <sqlite@leafac.com> (https://leafac.com)",
-  "license": "MIT",
-  "bugs": "https://github.com/leafac/sqlite/issues",
   "homepage": "https://github.com/leafac/sqlite",
+  "repository": "https://github.com/leafac/sqlite",
+  "bugs": "https://github.com/leafac/sqlite/issues",
   "funding": [
     "https://patreon.com/leafac",
     "https://paypal.me/LeandroFacchinettiEU",
     "https://github.com/sponsors/leafac",
     "https://btc.com/34KJBgtaFYMtDqpSgMayw9qiKWg2GQXA9M"
   ],
+  "author": "Leandro Facchinetti <sqlite@leafac.com> (https://leafac.com)",
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
-  "type": "module",
+  "exports": "./build/index.mjs",
+  "types": "./build/index.d.mts",
   "scripts": {
-    "test": "prettier --check \"./source/**/*\" --end-of-line auto && npm run prepare && cross-env TEST=leafac--sqlite node ./distribution/index.js",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "test": "prettier --check \"source/**/*.mts\" --end-of-line auto && npm run prepare && cross-env TEST=leafac--sqlite node ./build/index.mjs"
   },
   "dependencies": {
-    "@types/better-sqlite3": "^7.4.2",
-    "better-sqlite3": "^7.5.0"
+    "@types/better-sqlite3": "^7.6.2",
+    "better-sqlite3": "^7.6.2"
   },
   "devDependencies": {
-    "@types/node": "^17.0.17",
+    "@types/node": "^18.11.0",
     "cross-env": "^7.0.3",
-    "prettier": "^2.5.1",
-    "typescript": "^4.5.5"
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.4"
   }
 }
