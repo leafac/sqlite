@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import BetterSqlite3Database from "better-sqlite3";
 
-export interface Options {
+export type Options = {
   safeIntegers?: boolean;
-}
+};
 
-export interface Query {
+export type Query = {
   sourceParts: string[];
   parameters: any[];
-}
+};
 
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
 // FIXME: In BetterSqlite3Database types, make ‘filename’ optional, in which case a temporary database is created (see https://www.sqlite.org/inmemorydb.html § Temporary Databases)
