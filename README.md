@@ -296,7 +296,7 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
-#### 3.3.0
+#### 3.3.0 · 2022-11-22
 
 - Updated `better-sqlite3` to 8.0.0.
 
