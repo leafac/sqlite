@@ -296,6 +296,10 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
+#### 3.3.0
+
+- Updated `better-sqlite3` to 8.0.0.
+
 #### 3.2.1
 
 - Added support for JavaScript `Set`s in queries—they behave like arrays.
