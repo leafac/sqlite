@@ -296,6 +296,24 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Changelog
 
+#### 4.0.0 · 2022-12-02
+
+**Breaking Change**
+
+Use default import instead of named import for `` sql`...` ``.
+
+Before:
+
+```javascript
+import { sql, Database } from "@leafac/sqlite";
+```
+
+After:
+
+```javascript
+import sql, { Database } from "@leafac/sqlite";
+```
+
 #### 3.3.1 · 2022-12-02
 
 - Updated `better-sqlite3` to 8.0.1.

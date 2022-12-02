@@ -10,6 +10,160 @@ export type Query = {
   parameters: any[];
 };
 
+export default function sql(
+  template: TemplateStringsArray,
+  ...substitutions: any[]
+): Query {
+  const templateParts = [...template];
+  const sourceParts: string[] = [];
+  const parameters: any[] = [];
+  for (
+    let substitutionsIndex = 0;
+    substitutionsIndex < substitutions.length;
+    substitutionsIndex++
+  ) {
+    let templatePart = templateParts[substitutionsIndex];
+    let substitution = substitutions[substitutionsIndex];
+    if (substitution instanceof Set) substitution = [...substitution];
+    if (templatePart.endsWith("$")) {
+      templatePart = templatePart.slice(0, -1);
+      if (
+        !Array.isArray(substitution.sourceParts) ||
+        substitution.sourceParts.length === 0 ||
+        substitution.sourceParts.some(
+          (substitutionPart: any) => typeof substitutionPart !== "string"
+        ) ||
+        !Array.isArray(substitution.parameters) ||
+        substitution.sourceParts.length !== substitution.parameters.length + 1
+      )
+        throw new Error(
+          `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template literal`
+        );
+      const substitutionQuery = substitution as Query;
+      if (substitutionQuery.sourceParts.length === 1)
+        templateParts[substitutionsIndex + 1] = `${templatePart}${
+          substitutionQuery.sourceParts[0]
+        }${templateParts[substitutionsIndex + 1]}`;
+      else {
+        sourceParts.push(
+          `${templatePart}${substitutionQuery.sourceParts[0]}`,
+          ...substitutionQuery.sourceParts.slice(1, -1)
+        );
+        templateParts[substitutionsIndex + 1] = `${
+          substitutionQuery.sourceParts[
+            substitutionQuery.sourceParts.length - 1
+          ]
+        }${templateParts[substitutionsIndex + 1]}`;
+        parameters.push(...substitutionQuery.parameters);
+      }
+    } else if (Array.isArray(substitution)) {
+      if (substitution.length === 0)
+        templateParts[substitutionsIndex + 1] = `${templatePart}()${
+          templateParts[substitutionsIndex + 1]
+        }`;
+      else {
+        sourceParts.push(
+          `${templatePart}(`,
+          ...new Array(substitution.length - 1).fill(",")
+        );
+        templateParts[substitutionsIndex + 1] = `)${
+          templateParts[substitutionsIndex + 1]
+        }`;
+        parameters.push(...substitution);
+      }
+    } else {
+      sourceParts.push(templatePart);
+      parameters.push(substitution);
+    }
+  }
+  sourceParts.push(templateParts[templateParts.length - 1]);
+  return { sourceParts, parameters };
+}
+if (process.env.TEST === "leafac--sqlite") {
+  assert.deepEqual(
+    sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
+    {
+      sourceParts: [
+        `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
+      ],
+      parameters: [],
+    }
+  );
+  assert.deepEqual(
+    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`,
+    {
+      sourceParts: [`INSERT INTO "users" ("name") VALUES (`, `)`],
+      parameters: ["Leandro Facchinetti"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}`,
+    {
+      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
+      parameters: [],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[
+      "Leandro Facchinetti",
+      "David Adler",
+    ]}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
+        `,`,
+        `)`,
+      ],
+      parameters: ["Leandro Facchinetti", "David Adler"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([])}`,
+    {
+      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
+      parameters: [],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([
+      "Leandro Facchinetti",
+      "David Adler",
+    ])}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
+        `,`,
+        `)`,
+      ],
+      parameters: ["Leandro Facchinetti", "David Adler"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" IS NOT NULL`}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE name = `,
+        ` AND "age" IS NOT NULL`,
+      ],
+      parameters: ["Leandro Facchinetti"],
+    }
+  );
+  assert.deepEqual(
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${31}`}`,
+    {
+      sourceParts: [
+        `SELECT "id", "name" FROM "users" WHERE name = `,
+        ` AND "age" = `,
+        ``,
+      ],
+      parameters: ["Leandro Facchinetti", 31],
+    }
+  );
+  assert.throws(() => {
+    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${31}`}`;
+  });
+}
+
 // FIXME: Use BetterSqlite3Database generics: https://github.com/DefinitelyTyped/DefinitelyTyped/issues/50794
 // FIXME: In BetterSqlite3Database types, make ‘filename’ optional, in which case a temporary database is created (see https://www.sqlite.org/inmemorydb.html § Temporary Databases)
 // FIXME: In BetterSqlite3Database types, make BindParameters more specific than ‘any’
@@ -703,158 +857,4 @@ export class Database extends BetterSqlite3Database {
       database.close();
     }
   }
-}
-
-export function sql(
-  template: TemplateStringsArray,
-  ...substitutions: any[]
-): Query {
-  const templateParts = [...template];
-  const sourceParts: string[] = [];
-  const parameters: any[] = [];
-  for (
-    let substitutionsIndex = 0;
-    substitutionsIndex < substitutions.length;
-    substitutionsIndex++
-  ) {
-    let templatePart = templateParts[substitutionsIndex];
-    let substitution = substitutions[substitutionsIndex];
-    if (substitution instanceof Set) substitution = [...substitution];
-    if (templatePart.endsWith("$")) {
-      templatePart = templatePart.slice(0, -1);
-      if (
-        !Array.isArray(substitution.sourceParts) ||
-        substitution.sourceParts.length === 0 ||
-        substitution.sourceParts.some(
-          (substitutionPart: any) => typeof substitutionPart !== "string"
-        ) ||
-        !Array.isArray(substitution.parameters) ||
-        substitution.sourceParts.length !== substitution.parameters.length + 1
-      )
-        throw new Error(
-          `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template literal`
-        );
-      const substitutionQuery = substitution as Query;
-      if (substitutionQuery.sourceParts.length === 1)
-        templateParts[substitutionsIndex + 1] = `${templatePart}${
-          substitutionQuery.sourceParts[0]
-        }${templateParts[substitutionsIndex + 1]}`;
-      else {
-        sourceParts.push(
-          `${templatePart}${substitutionQuery.sourceParts[0]}`,
-          ...substitutionQuery.sourceParts.slice(1, -1)
-        );
-        templateParts[substitutionsIndex + 1] = `${
-          substitutionQuery.sourceParts[
-            substitutionQuery.sourceParts.length - 1
-          ]
-        }${templateParts[substitutionsIndex + 1]}`;
-        parameters.push(...substitutionQuery.parameters);
-      }
-    } else if (Array.isArray(substitution)) {
-      if (substitution.length === 0)
-        templateParts[substitutionsIndex + 1] = `${templatePart}()${
-          templateParts[substitutionsIndex + 1]
-        }`;
-      else {
-        sourceParts.push(
-          `${templatePart}(`,
-          ...new Array(substitution.length - 1).fill(",")
-        );
-        templateParts[substitutionsIndex + 1] = `)${
-          templateParts[substitutionsIndex + 1]
-        }`;
-        parameters.push(...substitution);
-      }
-    } else {
-      sourceParts.push(templatePart);
-      parameters.push(substitution);
-    }
-  }
-  sourceParts.push(templateParts[templateParts.length - 1]);
-  return { sourceParts, parameters };
-}
-if (process.env.TEST === "leafac--sqlite") {
-  assert.deepEqual(
-    sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
-    {
-      sourceParts: [
-        `CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
-      ],
-      parameters: [],
-    }
-  );
-  assert.deepEqual(
-    sql`INSERT INTO "users" ("name") VALUES (${"Leandro Facchinetti"})`,
-    {
-      sourceParts: [`INSERT INTO "users" ("name") VALUES (`, `)`],
-      parameters: ["Leandro Facchinetti"],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[]}`,
-    {
-      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
-      parameters: [],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${[
-      "Leandro Facchinetti",
-      "David Adler",
-    ]}`,
-    {
-      sourceParts: [
-        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
-        `,`,
-        `)`,
-      ],
-      parameters: ["Leandro Facchinetti", "David Adler"],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([])}`,
-    {
-      sourceParts: [`SELECT "id", "name" FROM "users" WHERE "name" IN ()`],
-      parameters: [],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE "name" IN ${new Set([
-      "Leandro Facchinetti",
-      "David Adler",
-    ])}`,
-    {
-      sourceParts: [
-        `SELECT "id", "name" FROM "users" WHERE "name" IN (`,
-        `,`,
-        `)`,
-      ],
-      parameters: ["Leandro Facchinetti", "David Adler"],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" IS NOT NULL`}`,
-    {
-      sourceParts: [
-        `SELECT "id", "name" FROM "users" WHERE name = `,
-        ` AND "age" IS NOT NULL`,
-      ],
-      parameters: ["Leandro Facchinetti"],
-    }
-  );
-  assert.deepEqual(
-    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${sql` AND "age" = ${31}`}`,
-    {
-      sourceParts: [
-        `SELECT "id", "name" FROM "users" WHERE name = `,
-        ` AND "age" = `,
-        ``,
-      ],
-      parameters: ["Leandro Facchinetti", 31],
-    }
-  );
-  assert.throws(() => {
-    sql`SELECT "id", "name" FROM "users" WHERE name = ${"Leandro Facchinetti"}$${` AND "age" = ${31}`}`;
-  });
 }
