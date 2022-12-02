@@ -79,6 +79,7 @@ export default function sql(
   sourceParts.push(templateParts[templateParts.length - 1]);
   return { sourceParts, parameters };
 }
+
 if (process.env.TEST === "leafac--sqlite") {
   assert.deepEqual(
     sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
@@ -187,6 +188,7 @@ export class Database extends BetterSqlite3Database {
     source += query.sourceParts[query.sourceParts.length - 1];
     return this.exec(source);
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -207,6 +209,7 @@ export class Database extends BetterSqlite3Database {
   run(query: Query, options: Options = {}): BetterSqlite3Database.RunResult {
     return this.getStatement(query, options).run(query.parameters);
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -226,6 +229,7 @@ export class Database extends BetterSqlite3Database {
   get<T>(query: Query, options: Options = {}): T | undefined {
     return this.getStatement(query, options).get(query.parameters);
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -258,6 +262,7 @@ export class Database extends BetterSqlite3Database {
   all<T>(query: Query, options: Options = {}): T[] {
     return this.getStatement(query, options).all(query.parameters);
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -345,6 +350,7 @@ export class Database extends BetterSqlite3Database {
   iterate<T>(query: Query, options: Options = {}): IterableIterator<T> {
     return this.getStatement(query, options).iterate(query.parameters);
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -381,6 +387,7 @@ export class Database extends BetterSqlite3Database {
   executeTransaction<T>(fn: () => T): T {
     return this.transaction(fn)();
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -434,6 +441,7 @@ export class Database extends BetterSqlite3Database {
   executeTransactionImmediate<T>(fn: () => T): T {
     return this.transaction(fn).immediate();
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -487,6 +495,7 @@ export class Database extends BetterSqlite3Database {
   executeTransactionExclusive<T>(fn: () => T): T {
     return this.transaction(fn).exclusive();
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
@@ -587,6 +596,7 @@ export class Database extends BetterSqlite3Database {
       if (foreignKeys) this.pragma("foreign_keys = ON");
     }
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite")
       (async () => {
@@ -740,6 +750,7 @@ export class Database extends BetterSqlite3Database {
       statement.safeIntegers(options.safeIntegers);
     return statement;
   }
+
   static {
     if (process.env.TEST === "leafac--sqlite") {
       const database = new Database(":memory:");
