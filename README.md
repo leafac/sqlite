@@ -76,7 +76,7 @@ Change API of `executeTransaction()` to use options passed as arguments instead 
 -->
 
 <h1 align="center">@leafac/sqlite</h1>
-<h3 align="center"><a href="https://npm.im/better-sqlite3">better-sqlite3</a> with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">tagged template literals</a></h3>
+<h3 align="center"><a href="https://npm.im/better-sqlite3">better-sqlite3</a> with <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">tagged templates</a></h3>
 <p align="center">
 <a href="https://github.com/leafac/sqlite"><img src="https://img.shields.io/badge/Source---" alt="Source"></a>
 <a href="https://www.npmjs.com/package/@leafac/sqlite"><img alt="Package" src="https://badge.fury.io/js/%40leafac%2Fsqlite.svg"></a>
@@ -95,7 +95,7 @@ Change API of `executeTransaction()` to use options passed as arguments instead 
 $ npm install @leafac/sqlite
 ```
 
-Use @leafac/sqlite with [the es6-string-html Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) for syntax highlighting on the queries in the tagged template literals.
+Use @leafac/sqlite with [the es6-string-html Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=Tobermory.es6-string-html) for syntax highlighting on the queries in the tagged templates.
 
 ### Features, Usage, and Examples
 
@@ -125,9 +125,9 @@ The problem with this approach is that you must manage statements in your applic
 
 @leafac/sqlite brings back the simplicity of issuing queries directly to the database object without losing the performance benefits of reuseable prepared statements (see [§ How It Works](#how-it-works)).
 
-#### The `sql` Tagged Template Literal
+#### The `sql` Tagged Template
 
-Queries in @leafac/sqlite must be created with the `sql` tagged template literal; simple untagged strings don’t work. @leafac/sqlite needs the tagged template literal to manage the prepared statements and to guarantee that the parameters are escaped safely (see [§ How It Works](#how-it-works)).
+Queries in @leafac/sqlite must be created with the `sql` tagged template; simple untagged strings don’t work. @leafac/sqlite needs the tagged template to manage the prepared statements and to guarantee that the parameters are escaped safely (see [§ How It Works](#how-it-works)).
 
 For example:
 
@@ -231,7 +231,7 @@ The `Database` class introduces the following new methods:
 - `.run(query, options)`, `.get<T>(query, options)`, `.all<T>(query, options)`, and `.iterate<T>(query, options)`: Equivalent to the corresponding methods in [better-sqlite3’s statements](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#runbindparameters---object). The differences are:
 
   1. These methods must be called on the database instead of on a prepared statement.
-  2. These methods work with queries generated with the `sql` tagged template literal.
+  2. These methods work with queries generated with the `sql` tagged template.
   3. **Advanced:** These methods accept an optional `options` parameter which should be an object with the `safeIntegers` field to control [the use of BigInt in the result](https://github.com/JoshuaWise/better-sqlite3/blob/v7.1.4/docs/integer.md). This changes the underlying statement until another query with the same statement sets `safeIntegers` to a different value. For example:
 
      ```typescript
@@ -248,13 +248,13 @@ The `Database` class introduces the following new methods:
      ); // => { id: 1, name: 'Leandro Facchinetti' }
      ```
 
-- `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template literal.
+- `.execute<T>(query)`: Equivalent to [better-sqlite3’s `.exec()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#execstring---this), but adapted to work with the queries generated with the `sql` tagged template.
 
 - `.executeTransaction<T>(fn)`, `.executeTransactionImmediate<T>(fn)`, and `.executeTransactionExclusive<T>(fn)`: Equivalent to [better-sqlite3’s `.transaction()`, `.transaction().immediate()`, and `.transaction().exclusive()`](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md#transactionfunction---function), but execute the transaction immediately (see [§ Convenience Methods for Transactions](#convenience-methods-for-transactions)).
 
 ### How It Works
 
-#### Prepared Statements Management & The `sql` Tagged Template Literal
+#### Prepared Statements Management & The `sql` Tagged Template
 
 The `sql` tag produces a data structure with the source of the query along with the parameters, for example, the following query:
 
@@ -283,14 +283,14 @@ You may also use the low-level `.getStatement(query: Query, options: Options)` m
 
 ### Related Projects
 
-- <https://npm.im/@leafac/html>: Use tagged template literals as an HTML template engine.
+- <https://npm.im/@leafac/html>: Use tagged templates as an HTML template engine.
 
 ### Prior Art
 
 - <https://npm.im/better-sqlite3>: The basis for @leafac/sqlite. The rest of this document explains how they’re different.
-- <https://npm.im/sql-template-strings>: This was the inspiration for using tagged template literals in this way. Unfortunately, sql-template-strings is incompatible with better-sqlite3, thus @leafac/sqlite.
+- <https://npm.im/sql-template-strings>: This was the inspiration for using tagged templates in this way. Unfortunately, sql-template-strings is incompatible with better-sqlite3, thus @leafac/sqlite.
 - <https://npm.im/html-template-tag>: I love (and stole) the idea of using `$${...}` to mark safe interpolation from html-template-tag.
-- <https://npm.im/package/pg-lit>, <https://npm.im/package/slonik>: These packages also feature tagged template literals for SQL, but they’re for [PostgreSQL](https://www.postgresql.org/) instead of SQLite.
+- <https://npm.im/package/pg-lit>, <https://npm.im/package/slonik>: These packages also feature tagged templates for SQL, but they’re for [PostgreSQL](https://www.postgresql.org/) instead of SQLite.
 - <https://npm.im/sqlite>, and <https://npm.im/better-sqlite3-helper>: These packages include lightweight migration systems. `.migrate()` is even more lightweight: It doesn’t support **down** migrations and it requires the migrations to be passed as an array, as opposed to, for example, being stored in SQL files. (But you can come up with this array in any way you want, including, for example, reading from a bunch of SQL files.)
 - <https://github.com/trevyn/turbosql>: After having published `.migrate()` the author of Turbosql [reached out](https://github.com/leafac/sqlite-migration/issues/1) to say that they independently arrived at a similar design, but in the Rust ecosystem instead of Node.js. It’s great to have company!
 

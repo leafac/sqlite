@@ -37,7 +37,7 @@ export default function sql(
         substitution.sourceParts.length !== substitution.parameters.length + 1
       )
         throw new Error(
-          `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template literal`
+          `Failed to interpolate raw query ‘${substitution}’ because it wasn’t created with the sql\`\` tagged template`
         );
       const substitutionQuery = substitution as Query;
       if (substitutionQuery.sourceParts.length === 1)

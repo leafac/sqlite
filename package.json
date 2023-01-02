@@ -6,7 +6,7 @@
     "sqlite",
     "sqlite3",
     "template",
-    "tagged template literal",
+    "tagged template",
     "template strings",
     "better-sqlite3"
   ],
