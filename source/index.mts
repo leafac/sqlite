@@ -80,7 +80,7 @@ export default function sql(
   return { sourceParts, parameters };
 }
 
-if (process.env.TEST === "leafac--sqlite") {
+if (process.env.TEST === "@leafac/sqlite") {
   assert.deepEqual(
     sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT)`,
     {
@@ -190,7 +190,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`
@@ -211,7 +211,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -231,7 +231,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -264,7 +264,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -352,7 +352,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -389,7 +389,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -443,7 +443,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -497,7 +497,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`
@@ -598,7 +598,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite")
+    if (process.env.TEST === "@leafac/sqlite")
       (async () => {
         const database = new Database(":memory:");
         let counter = 0;
@@ -752,7 +752,7 @@ export class Database extends BetterSqlite3Database {
   }
 
   static {
-    if (process.env.TEST === "leafac--sqlite") {
+    if (process.env.TEST === "@leafac/sqlite") {
       const database = new Database(":memory:");
       database.execute(
         sql`CREATE TABLE "users" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "name" TEXT);`

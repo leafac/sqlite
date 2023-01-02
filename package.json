@@ -28,7 +28,7 @@
   "types": "./build/index.d.mts",
   "scripts": {
     "prepare": "tsc",
-    "test": "prettier --check \"source/**/*.mts\" --end-of-line auto && npm run prepare && cross-env TEST=leafac--sqlite node ./build/index.mjs"
+    "test": "prettier --check \"./README.md\" --check \"./package.json\" --check \"./source/**/*.mts\" --end-of-line auto && npm run prepare && cross-env TEST=@leafac/sqlite node ./build/index.mjs"
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.2",
