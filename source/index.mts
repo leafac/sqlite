@@ -49,11 +49,11 @@ export default function sql(
           `${templatePart}${substitutionQuery.sourceParts[0]}`,
           ...substitutionQuery.sourceParts.slice(1, -1)
         );
-        templateParts[substitutionsIndex + 1] = `${
-          substitutionQuery.sourceParts[
-            substitutionQuery.sourceParts.length - 1
-          ]
-        }${templateParts[substitutionsIndex + 1]}`;
+        templateParts[
+          substitutionsIndex + 1
+        ] = `${substitutionQuery.sourceParts.at(-1)}${
+          templateParts[substitutionsIndex + 1]
+        }`;
         parameters.push(...substitutionQuery.parameters);
       }
     } else if (Array.isArray(substitution)) {
@@ -76,7 +76,7 @@ export default function sql(
       parameters.push(substitution);
     }
   }
-  sourceParts.push(templateParts[templateParts.length - 1]);
+  sourceParts.push(templateParts.at(-1)!);
   return { sourceParts, parameters };
 }
 
@@ -185,7 +185,7 @@ export class Database extends BetterSqlite3Database {
             SELECT quote(${query.parameters[parametersIndex]}) AS "parameter"
           `
         )!.parameter;
-    source += query.sourceParts[query.sourceParts.length - 1];
+    source += query.sourceParts.at(-1);
     return this.exec(source);
   }
 
