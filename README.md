@@ -132,7 +132,7 @@ Queries in @leafac/sqlite must be created with the `sql` tagged template; simple
 For example:
 
 ```typescript
-import { Database, sql } from "@leafac/sqlite";
+import sql, { Database } from "@leafac/sqlite";
 
 const database = new Database(":memory:");
 database.execute(
